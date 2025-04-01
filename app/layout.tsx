@@ -7,27 +7,34 @@ import { ThemeProvider } from "@/components/theme-provider"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "CineHub - Sua plataforma de filmes",
-  description: "Descubra, avalie e compartilhe seus filmes favoritos",
-    generator: 'v0.dev'
+  title: "CineHub",
+  description: "Aplicativo de filmes",
 }
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode
-}>) {
+}) {
   return (
-    <html lang="pt-BR">
-      <body className={inter.className}>
-        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
+    <html lang="pt-BR" suppressHydrationWarning>
+      <head>
+        <meta name="darkreader-lock" />
+      </head>
+      <body className={`${inter.className} dark bg-background`}>
+        <ThemeProvider 
+          attribute="class" 
+          defaultTheme="dark" 
+          enableSystem={false} 
+          disableTransitionOnChange
+          forcedTheme="dark"
+          suppressHydrationWarning
+        >
           {children}
         </ThemeProvider>
       </body>
     </html>
   )
 }
-
-
 
 import './globals.css'

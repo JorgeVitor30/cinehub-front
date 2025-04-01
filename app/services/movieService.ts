@@ -1,9 +1,13 @@
-const API_BASE_URL = 'http://localhost:5129/api/movies'
+const API_BASE_URL = 'http://localhost:5129/api'
 
 export interface MovieResponse {
-  popularMovies: Movie[]
-  newReleaseMovies: Movie[]
-  classicMovies: Movie[]
+  content: Movie[]
+  totalElements: number
+  totalPages: number
+  size: number
+  number: number
+  first: boolean
+  last: boolean
 }
 
 export interface Movie {
@@ -30,7 +34,7 @@ export interface Movie {
 export const movieService = {
   async getHomeMovies(): Promise<MovieResponse> {
     try {
-      const response = await fetch(`${API_BASE_URL}/home`)
+      const response = await fetch(`${API_BASE_URL}/movies/home`)
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
@@ -45,16 +49,31 @@ export const movieService = {
     }
   },
 
-  async getAllMoviesPage(): Promise<Movie[]> {
+  async getAllMoviesPage(page: number = 1, size: number = 20, title: string = ''): Promise<MovieResponse> {
     try {
-      const response = await fetch(`${API_BASE_URL}`)
+      const params = new URLSearchParams({
+        page: (page - 1).toString(),
+        size: size.toString()
+      })
+      
+      if (title) {
+        params.append('title', title)
+      }
+  
+      const url = `${API_BASE_URL}/movies?${params.toString()}`
+      console.log('URL da requisição:', url)
+      
+      const response = await fetch(url)
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
       }
+  
       const data = await response.json()
-      return data
+      console.log('Resposta da API:', data) // Debug da resposta
+      
+      return data as MovieResponse // Garantir que o tipo da resposta seja compatível com MovieResponse
     } catch (error) {
-      console.error('Erro ao buscar todos os filmes:', error)
+      console.error('Erro ao buscar filmes:', error)
       throw error
     }
   }

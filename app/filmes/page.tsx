@@ -1,111 +1,151 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
+import { ChevronDown, Filter, Search, X } from "lucide-react"
 import Navbar from "@/components/navbar"
 import FilmeCard from "@/components/filme-card"
 import FilmeModal, { type FilmeDetalhado } from "@/components/filme-modal"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { movieService, type Movie } from "@/app/services/movieService"
 import React from "react"
-
-
-// Dados simulados para demonstração - combinando todas as categorias
-const todosFilmes: FilmeDetalhado[] = []
-
-// Extrair todos os gêneros únicos para os filtros
-const todosGeneros = Array.from(new Set(todosFilmes.flatMap((filme) => filme.generos))).sort()
-
-// Número de filmes por página
-const FILMES_POR_PAGINA = 10
+import { useRouter, useSearchParams, usePathname } from 'next/navigation'
+import debounce from 'lodash/debounce'
 
 export default function FilmesPage() {
+  const inputRef = useRef<HTMLInputElement>(null)
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+  
+  const pageParam = searchParams.get('page')
+  const searchParam = searchParams.get('title') || ""
+  
+  const [paginaAtual, setPaginaAtual] = useState(pageParam ? Number(pageParam) : 1)
+  const [termoBusca, setTermoBusca] = useState(searchParam)
+  const [valorInput, setValorInput] = useState(searchParam)
   const [filmes, setFilmes] = useState<Movie[]>([])
   const [filmesFiltrados, setFilmesFiltrados] = useState<Movie[]>([])
   const [filmeAberto, setFilmeAberto] = useState<FilmeDetalhado | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [termoBusca, setTermoBusca] = useState("")
   const [generosSelecionados, setGenerosSelecionados] = useState<string[]>([])
   const [avaliacaoMinima, setAvaliacaoMinima] = useState(0)
   const [anoInicio, setAnoInicio] = useState(1970)
   const [anoFim, setAnoFim] = useState(2024)
   const [ordenarPor, setOrdenarPor] = useState<"recentes" | "avaliacao" | "titulo">("recentes")
-  const [paginaAtual, setPaginaAtual] = useState(1)
+  const [totalItems, setTotalItems] = useState(0)
+  const ITEMS_POR_PAGINA = 20
 
-  // Buscar filmes da API
+  const debouncedSearch = useCallback(
+    debounce((valor: string) => {
+      setTermoBusca(valor)
+      atualizarParametros(undefined, valor)
+    }, 500),
+    []
+  )
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const valor = e.target.value
+    setValorInput(valor)
+    debouncedSearch(valor)
+  }
+
+  const atualizarParametros = (novaPagina?: number, novoTermo?: string) => {
+    const params = new URLSearchParams(searchParams.toString())
+    
+    if (novaPagina !== undefined) {
+      params.set('page', novaPagina.toString())
+    }
+    
+    if (novoTermo !== undefined) {
+      if (novoTermo) {
+        params.set('title', novoTermo)
+      } else {
+        params.delete('title')
+      }
+      params.set('page', '1')
+    }
+    
+    router.push(`${pathname}?${params.toString()}`)
+  }
+
+  useEffect(() => {
+    if (pageParam) {
+      setPaginaAtual(Number(pageParam))
+    }
+  }, [pageParam])
+
   useEffect(() => {
     const fetchFilmes = async () => {
       try {
         setLoading(true)
-        const data: Movie[] = await movieService.getAllMoviesPage()
-        // Garante que data é um array
-        const filmesArray = Array.isArray(data.content) ? data.content : []
-        setFilmes(filmesArray)
-        setFilmesFiltrados(filmesArray)
+        const response = await movieService.getAllMoviesPage(
+          paginaAtual, 
+          ITEMS_POR_PAGINA,
+          termoBusca
+        )
+        
+        setFilmes(response.content || [])
+        setTotalItems(response.total || 0)
+        window.scrollTo({ top: 0, behavior: 'smooth' })
       } catch (err) {
         console.error("Erro ao carregar filmes:", err)
         setError(err instanceof Error ? err.message : "Erro ao carregar filmes")
         setFilmes([])
-        setFilmesFiltrados([])
+        setTotalItems(0)
       } finally {
         setLoading(false)
       }
     }
 
     fetchFilmes()
-  }, [])
+  }, [paginaAtual, termoBusca])
 
-  // Extrair gêneros únicos dos filmes carregados de forma segura
+  useEffect(() => {
+    if (inputRef.current) {
+      const length = inputRef.current.value.length
+      inputRef.current.focus()
+      inputRef.current.setSelectionRange(length, length)
+    }
+  }, [filmes])
+
   const todosGeneros = React.useMemo(() => {
-    if (!filmes || !Array.isArray(filmes)) return []
-    
+    if (!filmes) return []
     return Array.from(
       new Set(
         filmes
-          .filter(filme => filme && filme.genres)
+          .filter(filme => filme.genres)
           .flatMap(filme => filme.genres.split(", "))
           .filter(Boolean)
       )
     ).sort()
   }, [filmes])
 
-  // Aplicar filtros e ordenação de forma segura
   useEffect(() => {
-    if (!filmes || !Array.isArray(filmes)) {
-      setFilmesFiltrados([])
-      return
-    }
-
     let resultado = [...filmes]
-
-    // Filtrar por termo de busca
     if (termoBusca) {
-      resultado = resultado.filter(
-        (filme) =>
-          filme?.title?.toLowerCase().includes(termoBusca.toLowerCase()) ||
-          filme?.overview?.toLowerCase().includes(termoBusca.toLowerCase())
+      resultado = resultado.filter(filme => 
+        filme.title?.toLowerCase().includes(termoBusca.toLowerCase()) || 
+        filme.overview?.toLowerCase().includes(termoBusca.toLowerCase())
       )
     }
 
-    // Filtrar por gêneros
     if (generosSelecionados.length > 0) {
-      resultado = resultado.filter((filme) =>
-        generosSelecionados.some((genero) => filme?.genres?.includes(genero))
+      resultado = resultado.filter(filme =>
+        generosSelecionados.some(genero => filme.genres?.includes(genero))
       )
     }
 
-    // Filtrar por avaliação mínima
     if (avaliacaoMinima > 0) {
-      resultado = resultado.filter((filme) => filme.voteAverage >= avaliacaoMinima)
+      resultado = resultado.filter(filme => filme.voteAverage >= avaliacaoMinima)
     }
 
-    // Filtrar por intervalo de anos
-    resultado = resultado.filter((filme) => {
+    resultado = resultado.filter(filme => {
       const ano = new Date(filme.releaseDate).getFullYear()
       return ano >= anoInicio && ano <= anoFim
     })
 
-    // Ordenar resultados
     switch (ordenarPor) {
       case "recentes":
         resultado.sort((a, b) => new Date(b.releaseDate).getTime() - new Date(a.releaseDate).getTime())
@@ -119,16 +159,21 @@ export default function FilmesPage() {
     }
 
     setFilmesFiltrados(resultado)
-    setPaginaAtual(1)
   }, [termoBusca, generosSelecionados, avaliacaoMinima, anoInicio, anoFim, ordenarPor, filmes])
 
-  // Calcular filmes da página atual
-  const FILMES_POR_PAGINA = 10
-  const totalPaginas = Math.ceil(filmesFiltrados.length / FILMES_POR_PAGINA)
-  const filmesPaginaAtual = filmesFiltrados.slice(
-    (paginaAtual - 1) * FILMES_POR_PAGINA,
-    paginaAtual * FILMES_POR_PAGINA
-  )
+  const totalPaginas = Math.ceil(totalItems / ITEMS_POR_PAGINA) || 1
+
+  const handlePaginaAnterior = () => {
+    if (paginaAtual > 1) {
+      atualizarParametros(paginaAtual - 1)
+    }
+  }
+  
+  const handleProximaPagina = () => {
+    if (paginaAtual < totalPaginas) {
+      atualizarParametros(paginaAtual + 1)
+    }
+  }
 
   if (loading) {
     return (
@@ -187,33 +232,83 @@ export default function FilmesPage() {
       <Navbar />
       <main className="container mx-auto px-4 py-8">
         <section className="mb-8">
-          <h1 className="text-4xl font-bold mb-2">Todos os Filmes</h1>
-          <div className="flex flex-wrap gap-4 items-center">
-            {/* ... seus controles de filtro ... */}
+          <h1 className="text-4xl font-bold mb-4">Filmes</h1>
+          
+          <div className="flex gap-2 items-center mb-6">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-zinc-400 h-4 w-4" />
+              <Input
+                ref={inputRef}
+                type="text"
+                placeholder="Buscar filmes por título..."
+                value={valorInput}
+                onChange={handleInputChange}
+                autoFocus
+                className="pl-10 bg-zinc-900 border-zinc-700 text-white placeholder:text-zinc-400 w-full"
+              />
+              {valorInput && (
+                <button
+                  onClick={() => {
+                    setValorInput("")
+                    setTermoBusca("")
+                    atualizarParametros(undefined, "")
+                  }}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-zinc-400 hover:text-white"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
           </div>
+
+          {filmesFiltrados.length > 0 ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
+              {filmesFiltrados.map((filme) => (
+                <FilmeCard
+                  key={filme.id}
+                  id={filme.id}
+                  titulo={filme.title}
+                  capa={filme.posterPhotoUrl}
+                  avaliacao={filme.voteAverage}
+                  duracao={`${Math.floor(filme.runTime / 60)}h ${filme.runTime % 60}m`}
+                  ano={new Date(filme.releaseDate).getFullYear()}
+                  descricao={filme.overview}
+                  onClick={() => handleOpenFilme(filme)}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-16">
+              <p className="text-zinc-400 text-lg">
+                {termoBusca ? "Nenhum filme encontrado para sua busca." : "Nenhum filme disponível."}
+              </p>
+            </div>
+          )}
         </section>
 
-        {filmesPaginaAtual.length > 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
-            {filmesPaginaAtual.map((filme) => (
-              <FilmeCard
-                key={filme.id}
-                id={filme.id}
-                titulo={filme.title}
-                capa={filme.posterPhotoUrl}
-                avaliacao={filme.voteAverage}
-                duracao={`${Math.floor(filme.runTime / 60)}h ${filme.runTime % 60}m`}
-                ano={new Date(filme.releaseDate).getFullYear()}
-                descricao={filme.overview}
-                onClick={() => handleOpenFilme(filme)}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-16">
-            <p className="text-zinc-400 text-lg">Nenhum filme encontrado.</p>
-          </div>
-        )}
+        <div className="mt-8 flex justify-center items-center gap-4">
+          <Button
+            onClick={handlePaginaAnterior}
+            disabled={paginaAtual === 1}
+            variant="outline"
+            className="px-4 py-2"
+          >
+            Anterior
+          </Button>
+          
+          <span className="text-sm font-medium">
+            Página {paginaAtual} de {totalPaginas}
+          </span>
+
+          <Button
+            onClick={handleProximaPagina}
+            disabled={paginaAtual === totalPaginas}
+            variant="outline"
+            className="px-4 py-2"
+          >
+            Próxima
+          </Button>
+        </div>
       </main>
 
       {filmeAberto && (
