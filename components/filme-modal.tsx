@@ -158,261 +158,230 @@ export default function FilmeModal({ filme, aberto, onClose }: FilmeModalProps) 
 
   return (
     <Dialog open={aberto} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-4xl bg-zinc-900 text-white border-zinc-800 p-0 overflow-hidden">
-        {/* Banner do filme */}
-        <div className="relative w-full h-[300px] md:h-[400px]">
-          <Image
-            src={filme.banner || filme.capa}
-            alt={filme.titulo}
-            fill
-            className="object-cover"
-            sizes="(max-width: 768px) 100vw, 1200px"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-zinc-900 via-zinc-900/60 to-transparent" />
+      <DialogContent className="w-[95%] max-w-4xl bg-zinc-900 text-white border-zinc-800 p-0 overflow-hidden">
+        <div className="max-h-[85vh] overflow-hidden flex flex-col">
+          {/* Banner do filme */}
+          <div className="relative w-full h-[250px] flex-shrink-0">
+            <Image
+              src={filme.banner || filme.capa}
+              alt={filme.titulo}
+              fill
+              className="object-cover"
+              sizes="(max-width: 768px) 100vw, 1200px"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-zinc-900 via-zinc-900/60 to-transparent" />
 
-          {/* Botão de fechar */}
-          <button
-            onClick={onClose}
-            className="absolute top-4 right-4 p-2 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"
-            aria-label="Fechar"
-          >
-            <X className="h-5 w-5" />
-          </button>
-
-          {/* Informações principais sobrepostas ao banner */}
-          <div className="absolute bottom-0 left-0 right-0 p-6">
-            <h2 className="text-3xl md:text-4xl font-bold mb-2">{filme.titulo}</h2>
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-zinc-300">
-              <div className="flex items-center">
-                <Clock className="h-4 w-4 mr-1" />
-                <span>{filme.duracao}</span>
-              </div>
-              <div className="flex items-center">
-                <Calendar className="h-4 w-4 mr-1" />
-                <span>{filme.ano}</span>
-              </div>
-              <div className="flex items-center">
-                <Globe className="h-4 w-4 mr-1" />
-                <span>{filme.lingua}</span>
-              </div>
-              <div className="flex items-center text-amber-500">
-                <Star className="h-4 w-4 mr-1 fill-amber-500" />
-                <span>{filme.avaliacao.toFixed(1)}/10</span>
-              </div>
-              <div className="flex items-center">
-                <DollarSign className="h-4 w-4 mr-1" />
-                <span>{filme.orcamento}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="p-6 grid gap-6 md:grid-cols-3">
-          {/* Coluna da esquerda: Descrição e Avaliação */}
-          <div className="md:col-span-2 space-y-6">
-            <div>
-              <h3 className="text-xl font-semibold mb-2">Sinopse</h3>
-              <p className="text-zinc-300">{filme.descricao}</p>
-            </div>
-
-            {/* Seção de palavras-chave */}
-            {keywords.length > 0 && (
-              <div>
-                <h3 className="text-xl font-semibold mb-2 flex items-center">
-                  <Tag className="h-5 w-5 mr-2 text-amber-500" />
-                  Palavras-chave
-                </h3>
-                <div className="flex flex-wrap gap-2">
-                  {keywords.map((keyword, index) => (
-                    <Badge key={index} className="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border-none">
-                      {keyword}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Seção de anotações */}
-            <div className="bg-zinc-800 rounded-lg p-4 mt-4">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-lg font-semibold flex items-center">
-                  <Pencil className="h-5 w-5 mr-2 text-amber-500" />
-                  Minhas anotações
-                </h3>
-                {!editandoAnotacao && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setEditandoAnotacao(true)}
-                    className="text-zinc-400 hover:text-white"
-                  >
-                    {anotacaoSalva ? "Editar" : "Adicionar"}
-                  </Button>
-                )}
-              </div>
-
-              {editandoAnotacao ? (
-                <div className="space-y-2">
-                  <Textarea
-                    placeholder="Escreva uma anotação curta sobre este filme..."
-                    value={anotacao}
-                    onChange={(e) => setAnotacao(e.target.value)}
-                    className="bg-zinc-700 border-zinc-600 focus-visible:ring-amber-500 min-h-[80px]"
-                  />
-                  <div className="flex justify-end gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setAnotacao(anotacaoSalva)
-                        setEditandoAnotacao(false)
-                      }}
-                      className="border-zinc-600 text-zinc-300 hover:bg-zinc-700"
-                    >
-                      Cancelar
-                    </Button>
-                    <Button size="sm" onClick={salvarAnotacao} className="bg-amber-500 hover:bg-amber-600 text-black">
-                      <Save className="h-4 w-4 mr-1" />
-                      Salvar
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <div>
-                  {anotacaoSalva ? (
-                    <p className="text-zinc-300 whitespace-pre-line">{anotacaoSalva}</p>
-                  ) : (
-                    <p className="text-zinc-500 italic">Nenhuma anotação para este filme.</p>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Seção de avaliação do usuário */}
-            <div className="bg-zinc-800 rounded-lg p-4">
-              <h3 className="text-lg font-semibold mb-3 flex items-center">
-                Sua avaliação
-                {avaliacaoUsuario !== null && (
-                  <span className="ml-2 bg-green-500/20 text-green-500 text-xs rounded-full px-2 py-0.5 flex items-center">
-                    <Check className="h-3 w-3 mr-1" />
-                    Avaliado
-                  </span>
-                )}
-              </h3>
-
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    {[...Array(10)].map((_, i) => (
-                      <Star
-                        key={i}
-                        className={cn(
-                          "h-6 w-6 cursor-pointer transition-all",
-                          i < avaliacaoTemporaria ? "text-amber-500 fill-amber-500" : "text-zinc-600",
-                        )}
-                        onClick={() => setAvaliacaoTemporaria(i + 1)}
-                      />
-                    ))}
-                  </div>
-                  <span className="text-2xl font-bold text-amber-500">{avaliacaoTemporaria}/10</span>
-                </div>
-
-                <Slider
-                  min={1}
-                  max={10}
-                  step={1}
-                  value={[avaliacaoTemporaria]}
-                  onValueChange={(value) => setAvaliacaoTemporaria(value[0])}
-                  className="w-full"
-                />
-
-                <div className="flex justify-between items-center">
-                  <div>
-                    {erro && <p className="text-red-500 text-sm">{erro}</p>}
-                    {sucessoAvaliacao && (
-                      <p className="text-green-500 text-sm flex items-center">
-                        <Check className="h-3 w-3 mr-1" />
-                        Avaliação registrada com sucesso!
-                      </p>
-                    )}
-                  </div>
-
-                  <Button
-                    onClick={handleAvaliar}
-                    disabled={isAvaliando || avaliacaoTemporaria === avaliacaoUsuario}
-                    className="bg-gradient-to-r from-amber-500 to-red-600 hover:from-amber-600 hover:to-red-700 text-white border-0"
-                  >
-                    {isAvaliando ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Enviando...
-                      </>
-                    ) : avaliacaoUsuario !== null ? (
-                      "Atualizar avaliação"
-                    ) : (
-                      "Avaliar filme"
-                    )}
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Coluna da direita: Gêneros e Produções */}
-          <div className="space-y-6">
-            {/* Favoritar */}
-            <Button
-              variant="outline"
-              onClick={handleFavoritar}
-              className={`w-full border-zinc-700 flex items-center justify-center gap-2 ${
-                favorito || avaliacaoUsuario !== null
-                  ? "bg-red-500/10 border-red-500/50 text-red-500 hover:bg-red-500/20 hover:text-red-400"
-                  : "hover:bg-zinc-800 hover:text-amber-500"
-              }`}
+            {/* Botão de fechar */}
+            <button
+              onClick={onClose}
+              className="absolute top-4 right-4 z-50 p-2 rounded-full bg-black/50 hover:bg-black/70 transition-colors"
+              aria-label="Fechar"
             >
-              <Heart className={`h-5 w-5 ${favorito || avaliacaoUsuario !== null ? "fill-red-500" : ""}`} />
-              {favorito || avaliacaoUsuario !== null ? "Adicionado aos favoritos" : "Adicionar aos favoritos"}
-            </Button>
+              <X className="h-5 w-5" />
+            </button>
+          </div>
 
-            {/* Gêneros */}
-            <div>
-              <h3 className="text-lg font-semibold mb-3">Gêneros</h3>
-              <div className="flex flex-wrap gap-2">
-                {filme.generos.map((genero) => (
-                  <Badge
-                    key={genero}
-                    variant="outline"
-                    className="bg-zinc-800 text-zinc-300 border-zinc-700 hover:bg-zinc-700"
-                  >
-                    {genero}
-                  </Badge>
-                ))}
+          {/* Conteúdo com scroll */}
+          <div className="flex-1 overflow-y-auto min-h-0">
+            <div className="relative -mt-20 px-6 pb-6">
+              <h2 className="text-2xl md:text-3xl font-bold mb-2">{filme.titulo}</h2>
+              
+              {/* Metadados do filme */}
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-zinc-300 mb-4">
+                <div className="flex items-center">
+                  <Clock className="h-4 w-4 mr-1" />
+                  <span>{filme.duracao}</span>
+                </div>
+                <div className="flex items-center">
+                  <Calendar className="h-4 w-4 mr-1" />
+                  <span>{filme.ano}</span>
+                </div>
+                <div className="flex items-center">
+                  <Globe className="h-4 w-4 mr-1" />
+                  <span>{filme.lingua}</span>
+                </div>
+                <div className="flex items-center text-amber-500">
+                  <Star className="h-4 w-4 mr-1 fill-amber-500" />
+                  <span>{filme.avaliacao.toFixed(1)}/10</span>
+                </div>
+                <div className="flex items-center">
+                  <DollarSign className="h-4 w-4 mr-1" />
+                  <span>{filme.orcamento}</span>
+                </div>
               </div>
-            </div>
 
-            {/* Produções */}
-            <div>
-              <h3 className="text-lg font-semibold mb-3">Produção</h3>
-              <div className="space-y-3">
-                {filme.producoes.map((producao) => (
-                  <div key={producao.nome} className="flex items-center gap-2 bg-zinc-800 rounded p-2">
-                    {producao.logo ? (
-                      <div className="w-8 h-8 relative flex-shrink-0">
-                        <Image
-                          src={producao.logo || "/placeholder.svg"}
-                          alt={producao.nome}
-                          fill
-                          className="object-contain"
+              {/* Grid de conteúdo principal */}
+              <div className="grid gap-6 md:grid-cols-3">
+                {/* Coluna da esquerda: Descrição e Avaliação */}
+                <div className="md:col-span-2 space-y-6">
+                  <div>
+                    <h3 className="text-lg font-semibold mb-2">Sinopse</h3>
+                    <p className="text-zinc-300">{filme.descricao}</p>
+                  </div>
+
+                  {/* Seção de palavras-chave */}
+                  {keywords.length > 0 && (
+                    <div>
+                      <h3 className="text-lg font-semibold mb-2 flex items-center">
+                        <Tag className="h-5 w-5 mr-2 text-amber-500" />
+                        Palavras-chave
+                      </h3>
+                      <div className="flex flex-wrap gap-2">
+                        {keywords.map((keyword, index) => (
+                          <Badge key={index} className="bg-zinc-800 hover:bg-zinc-700 text-zinc-200">
+                            {keyword}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Seção de anotações */}
+                  <div className="bg-zinc-800 rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="text-lg font-semibold flex items-center">
+                        <Pencil className="h-5 w-5 mr-2 text-amber-500" />
+                        Minhas anotações
+                      </h3>
+                      {!editandoAnotacao && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setEditandoAnotacao(true)}
+                          className="text-zinc-400 hover:text-white"
+                        >
+                          {anotacaoSalva ? "Editar" : "Adicionar"}
+                        </Button>
+                      )}
+                    </div>
+
+                    {editandoAnotacao ? (
+                      <div className="space-y-2">
+                        <Textarea
+                          placeholder="Escreva uma anotação curta sobre este filme..."
+                          value={anotacao}
+                          onChange={(e) => setAnotacao(e.target.value)}
+                          className="bg-zinc-700 border-zinc-600 focus-visible:ring-amber-500"
                         />
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setAnotacao(anotacaoSalva)
+                              setEditandoAnotacao(false)
+                            }}
+                            className="border-zinc-600 text-zinc-300 hover:bg-zinc-700"
+                          >
+                            Cancelar
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            onClick={salvarAnotacao}
+                            className="bg-amber-500 hover:bg-amber-600 text-black"
+                          >
+                            <Save className="h-4 w-4 mr-1" />
+                            Salvar
+                          </Button>
+                        </div>
                       </div>
                     ) : (
-                      <div className="w-8 h-8 bg-zinc-700 rounded flex items-center justify-center flex-shrink-0">
-                        <span className="text-xs font-bold">{producao.nome.substring(0, 2).toUpperCase()}</span>
+                      <div>
+                        {anotacaoSalva ? (
+                          <p className="text-zinc-300 whitespace-pre-line">{anotacaoSalva}</p>
+                        ) : (
+                          <p className="text-zinc-500 italic">Nenhuma anotação para este filme.</p>
+                        )}
                       </div>
                     )}
-                    <span className="text-sm">{producao.nome}</span>
                   </div>
-                ))}
+
+                  {/* Seção de avaliação */}
+                  <div className="bg-zinc-800 rounded-lg p-4">
+                    <h3 className="text-lg font-semibold mb-3 flex items-center">
+                      Sua avaliação
+                      {avaliacaoUsuario !== null && (
+                        <span className="ml-2 bg-green-500/20 text-green-500 text-xs rounded-full px-2 py-0.5 flex items-center">
+                          <Check className="h-3 w-3 mr-1" />
+                          Avaliado
+                        </span>
+                      )}
+                    </h3>
+
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center">
+                          {[...Array(10)].map((_, i) => (
+                            <Star
+                              key={i}
+                              className={cn(
+                                "h-5 w-5 cursor-pointer transition-all",
+                                i < avaliacaoTemporaria ? "text-amber-500 fill-amber-500" : "text-zinc-600"
+                              )}
+                              onClick={() => setAvaliacaoTemporaria(i + 1)}
+                            />
+                          ))}
+                        </div>
+                        <span className="text-2xl font-bold text-amber-500">{avaliacaoTemporaria}/10</span>
+                      </div>
+
+                      <Slider
+                        min={1}
+                        max={10}
+                        step={1}
+                        value={[avaliacaoTemporaria]}
+                        onValueChange={(value) => setAvaliacaoTemporaria(value[0])}
+                        className="w-full"
+                      />
+
+                      <div className="flex justify-between items-center">
+                        <div>
+                          {erro && <p className="text-red-500 text-sm">{erro}</p>}
+                          {sucessoAvaliacao && (
+                            <p className="text-green-500 text-sm flex items-center">
+                              <Check className="h-3 w-3 mr-1" />
+                              Avaliação registrada com sucesso!
+                            </p>
+                          )}
+                        </div>
+
+                        <Button
+                          onClick={handleAvaliar}
+                          disabled={isAvaliando || avaliacaoTemporaria === avaliacaoUsuario}
+                          className="bg-gradient-to-r from-amber-500 to-red-600 hover:from-amber-600 hover:to-red-700 text-white"
+                        >
+                          {isAvaliando ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Enviando...
+                            </>
+                          ) : avaliacaoUsuario !== null ? (
+                            "Atualizar avaliação"
+                          ) : (
+                            "Avaliar filme"
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Coluna da direita: Favoritar e outras informações */}
+                <div className="space-y-6">
+                  <Button
+                    variant="outline"
+                    onClick={handleFavoritar}
+                    className={cn(
+                      "w-full border-zinc-700 flex items-center justify-center gap-2",
+                      favorito ? "bg-red-500/10 border-red-500/50 text-red-500 hover:bg-red-500/20" : "hover:bg-zinc-800"
+                    )}
+                  >
+                    <Heart className={cn("h-5 w-5", favorito && "fill-red-500")} />
+                    {favorito ? "Remover dos favoritos" : "Adicionar aos favoritos"}
+                  </Button>
+
+                  {/* Outras informações do filme podem ser adicionadas aqui */}
+                </div>
               </div>
             </div>
           </div>
