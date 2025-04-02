@@ -1,18 +1,28 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
-import { Film, Search, User, Menu, X, Home } from "lucide-react"
+import { usePathname, useRouter } from "next/navigation"
+import { Film, Search, User, Menu, X, Home, LogOut } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { authService } from "@/app/services/authService"
+import { useAuth } from '@/contexts/AuthContext'
 
 export default function Navbar() {
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const pathname = usePathname()
+  const router = useRouter()
+  const { isAuthenticated, setIsAuthenticated } = useAuth()
 
   const isActive = (path: string) => pathname === path
+
+  const handleLogout = () => {
+    authService.logout()
+    setIsAuthenticated(false)
+    router.push('/') // Redireciona para a página inicial após logout
+  }
 
   return (
     <header className="sticky top-0 z-50 w-full backdrop-blur-lg bg-black/70 border-b border-zinc-800">
@@ -116,11 +126,22 @@ export default function Navbar() {
               </Link>
             </Button>
 
-            <Link href="/auth">
-              <Button className="hidden sm:flex bg-gradient-to-r from-amber-500 to-red-600 hover:from-amber-600 hover:to-red-700 text-white border-0">
-                Entrar
+            {isAuthenticated ? (
+              <Button
+                onClick={handleLogout}
+                variant="ghost"
+                className="text-zinc-400 hover:text-white gap-2"
+              >
+                <LogOut className="h-4 w-4" />
+                Sair
               </Button>
-            </Link>
+            ) : (
+              <Link href="/auth">
+                <Button variant="outline">
+                  Entrar
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
       </div>

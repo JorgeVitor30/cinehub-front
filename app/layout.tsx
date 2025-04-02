@@ -3,6 +3,7 @@ import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
+import { AuthProvider } from '@/contexts/AuthContext'
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -22,16 +23,18 @@ export default function RootLayout({
         <meta name="darkreader-lock" />
       </head>
       <body className={`${inter.className} dark bg-background`}>
-        <ThemeProvider 
-          attribute="class" 
-          defaultTheme="dark" 
-          enableSystem={false} 
-          disableTransitionOnChange
-          forcedTheme="dark"
-          suppressHydrationWarning
-        >
-          {children}
-        </ThemeProvider>
+        <AuthProvider>
+          <ThemeProvider 
+            attribute="class" 
+            defaultTheme="dark" 
+            enableSystem={false} 
+            disableTransitionOnChange
+            forcedTheme="dark"
+            suppressHydrationWarning
+          >
+            {children}
+          </ThemeProvider>
+        </AuthProvider>
       </body>
     </html>
   )

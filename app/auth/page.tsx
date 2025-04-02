@@ -10,9 +10,12 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { authService } from "@/app/services/authService"
+import { useAuth } from "@/hooks/useAuth"
 
 export default function AuthPage() {
   const router = useRouter()
+  const { setIsAuthenticated } = useAuth()
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
@@ -57,17 +60,17 @@ export default function AuthPage() {
 
     try {
       setIsLoading(true)
+      
+      await authService.login({
+        email: loginData.email,
+        password: loginData.password
+      })
 
-      // Simulação de autenticação (aqui você implementaria a chamada real à API)
-      await new Promise((resolve) => setTimeout(resolve, 1500))
-
-      console.log("Login realizado com sucesso:", loginData)
-
-      // Redirecionar para a página inicial após login bem-sucedido
-      router.push("/")
+      setIsAuthenticated(true) // Atualiza o estado global
+      router.push("/filmes")
     } catch (error) {
       console.error("Erro ao fazer login:", error)
-      setFormError("Falha na autenticação. Verifique suas credenciais.")
+      setFormError("Email ou senha inválidos")
     } finally {
       setIsLoading(false)
     }
