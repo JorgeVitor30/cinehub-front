@@ -34,7 +34,6 @@ export default function FilmesPage() {
   const [filmes, setFilmes] = useState<Movie[]>([])
   const [filmesFiltrados, setFilmesFiltrados] = useState<Movie[]>([])
   const [filmeAberto, setFilmeAberto] = useState<FilmeDetalhado | null>(null)
-  const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [generosSelecionados, setGenerosSelecionados] = useState<string[]>([])
   const [avaliacaoMinima, setAvaliacaoMinima] = useState(0)
@@ -45,6 +44,8 @@ export default function FilmesPage() {
   const ITEMS_POR_PAGINA = 20
   const [generoSelecionado, setGeneroSelecionado] = useState<string>("")
   const [notaMinima, setNotaMinima] = useState<number>(0)
+  const [isSliderMoving, setIsSliderMoving] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
 
   const debouncedSearch = useCallback(
     debounce((valor: string) => {
@@ -54,10 +55,22 @@ export default function FilmesPage() {
     []
   )
 
+  const debouncedNoteChange = useCallback(
+    debounce((value: number) => {
+      atualizarParametros(undefined, undefined, undefined, value)
+    }, 500),
+    []
+  )
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const valor = e.target.value
     setValorInput(valor)
     debouncedSearch(valor)
+  }
+
+  const handleNoteChange = (value: number[]) => {
+    setNotaMinima(value[0])
+    debouncedNoteChange(value[0])
   }
 
   const atualizarParametros = (novaPagina?: number, novoTermo?: string, novoGenero?: string, novaNota?: number) => {
@@ -106,7 +119,7 @@ export default function FilmesPage() {
   useEffect(() => {
     const fetchFilmes = async () => {
       try {
-        setLoading(true)
+        setIsLoading(true)
         const response = await movieService.getAllMoviesPage(
           paginaAtual, 
           ITEMS_POR_PAGINA,
@@ -117,14 +130,13 @@ export default function FilmesPage() {
         
         setFilmes(response.content || [])
         setTotalItems(response.total || 0)
-        window.scrollTo({ top: 0, behavior: 'smooth' })
       } catch (err) {
         console.error("Erro ao carregar filmes:", err)
         setError(err instanceof Error ? err.message : "Erro ao carregar filmes")
         setFilmes([])
         setTotalItems(0)
       } finally {
-        setLoading(false)
+        setIsLoading(false)
       }
     }
 
@@ -209,7 +221,16 @@ export default function FilmesPage() {
     }
   }
 
-  if (loading) {
+  const limparFiltros = () => {
+    setValorInput("")
+    setTermoBusca("")
+    setGeneroSelecionado("")
+    setNotaMinima(0)
+    setOrdenarPor("recentes")
+    atualizarParametros(1, "", "", 0) // Reseta página para 1 e limpa todos os filtros
+  }
+
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-black to-zinc-900 text-white">
         <Navbar />
@@ -279,8 +300,8 @@ export default function FilmesPage() {
             </p>
           </div>
           
-          <div className="flex gap-2 items-center mb-6">
-            <div className="relative flex-1">
+          <div className="flex flex-wrap gap-2 items-center mb-6">
+            <div className="relative w-[300px] sm:w-[550px]">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-zinc-400 h-4 w-4" />
               <Input
                 ref={inputRef}
@@ -288,7 +309,6 @@ export default function FilmesPage() {
                 placeholder="Buscar filmes por título..."
                 value={valorInput}
                 onChange={handleInputChange}
-                autoFocus
                 className="pl-10 bg-zinc-900 border-zinc-700 text-white placeholder:text-zinc-400 w-full"
               />
               {valorInput && (
@@ -307,13 +327,48 @@ export default function FilmesPage() {
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="gap-2">
-                  <Filter className="h-4 w-4" />
-                  {generoSelecionado || "Gênero"}
+                <Button variant="outline" className="gap-2 w-[180px] justify-between">
+                  <span className="flex items-center gap-2">
+                    <ChevronDown className="h-4 w-4" />
+                    {ordenarPor === "recentes" && "Mais recentes"}
+                    {ordenarPor === "avaliacao" && "Melhor avaliados"}
+                    {ordenarPor === "titulo" && "Título (A-Z)"}
+                  </span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="bg-zinc-900 border-zinc-700 w-[180px]">
+                <DropdownMenuItem
+                  className="text-white hover:bg-zinc-800"
+                  onClick={() => setOrdenarPor("recentes")}
+                >
+                  Mais recentes
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="text-white hover:bg-zinc-800"
+                  onClick={() => setOrdenarPor("avaliacao")}
+                >
+                  Melhor avaliados
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="text-white hover:bg-zinc-800"
+                  onClick={() => setOrdenarPor("titulo")}
+                >
+                  Título (A-Z)
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="gap-2 w-[160px] justify-between">
+                  <span className="flex items-center gap-2">
+                    <Filter className="h-4 w-4" />
+                    {generoSelecionado || "Gênero"}
+                  </span>
                   <ChevronDown className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="bg-zinc-900 border-zinc-700">
+              <DropdownMenuContent className="bg-zinc-900 border-zinc-700 w-[160px]">
                 <DropdownMenuItem
                   className="text-white hover:bg-zinc-800"
                   onClick={() => {
@@ -338,8 +393,14 @@ export default function FilmesPage() {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            <div className="flex items-center gap-2 bg-zinc-900 rounded-md p-2 border border-zinc-700">
-              <span className="text-sm whitespace-nowrap">Nota mínima:</span>
+            <div 
+              className="flex items-center gap-3 bg-zinc-900 rounded-md p-3 border border-zinc-700 w-[280px]"
+              onMouseEnter={() => setIsSliderMoving(true)}
+              onMouseLeave={() => setIsSliderMoving(false)}
+              onTouchStart={() => setIsSliderMoving(true)}
+              onTouchEnd={() => setIsSliderMoving(false)}
+            >
+              <span className="text-sm whitespace-nowrap font-medium">Nota mínima:</span>
               <Slider
                 min={0}
                 max={10}
@@ -347,37 +408,57 @@ export default function FilmesPage() {
                 value={[notaMinima]}
                 onValueChange={(value) => {
                   setNotaMinima(value[0])
-                  atualizarParametros(undefined, undefined, undefined, value[0])
+                  if (!isSliderMoving) {
+                    debouncedNoteChange(value[0])
+                  }
                 }}
-                className="w-32"
+                onValueCommit={(value) => {
+                  if (isSliderMoving) {
+                    debouncedNoteChange(value[0])
+                  }
+                }}
+                className="w-40"
               />
-              <span className="text-sm font-medium w-8">{notaMinima}</span>
+              <span className="text-sm font-medium w-10 text-center">{notaMinima}</span>
             </div>
+
+            {(valorInput || generoSelecionado || notaMinima > 0 || ordenarPor !== "recentes") && (
+              <Button
+                variant="ghost"
+                onClick={limparFiltros}
+                className="gap-2 text-zinc-400 hover:text-white"
+              >
+                <X className="h-4 w-4" />
+                Limpar filtros
+              </Button>
+            )}
           </div>
 
-          {filmesFiltrados.length > 0 ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
-              {filmesFiltrados.map((filme) => (
-                <FilmeCard
-                  key={filme.id}
-                  id={filme.id}
-                  titulo={filme.title}
-                  capa={filme.posterPhotoUrl}
-                  avaliacao={filme.voteAverage}
-                  duracao={`${Math.floor(filme.runTime / 60)}h ${filme.runTime % 60}m`}
-                  ano={new Date(filme.releaseDate).getFullYear()}
-                  descricao={filme.overview}
-                  onClick={() => handleOpenFilme(filme)}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-16">
-              <p className="text-zinc-400 text-lg">
-                {termoBusca ? "Nenhum filme encontrado para sua busca." : "Nenhum filme disponível."}
-              </p>
-            </div>
-          )}
+          <div className="transition-opacity duration-200 ease-in-out">
+            {filmesFiltrados.length > 0 ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
+                {filmesFiltrados.map((filme) => (
+                  <FilmeCard
+                    key={filme.id}
+                    id={filme.id}
+                    titulo={filme.title}
+                    capa={filme.posterPhotoUrl}
+                    avaliacao={filme.voteAverage}
+                    duracao={`${Math.floor(filme.runTime / 60)}h ${filme.runTime % 60}m`}
+                    ano={new Date(filme.releaseDate).getFullYear()}
+                    descricao={filme.overview}
+                    onClick={() => handleOpenFilme(filme)}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-16">
+                <p className="text-zinc-400 text-lg">
+                  {termoBusca ? "Nenhum filme encontrado para sua busca." : "Nenhum filme disponível."}
+                </p>
+              </div>
+            )}
+          </div>
         </section>
 
         <div className="mt-8 flex justify-center items-center gap-4">
