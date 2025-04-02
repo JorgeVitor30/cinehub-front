@@ -49,7 +49,13 @@ export const movieService = {
     }
   },
 
-  async getAllMoviesPage(page: number = 1, size: number = 20, title: string = ''): Promise<MovieResponse> {
+  async getAllMoviesPage(
+    page: number = 1, 
+    size: number = 20, 
+    title: string = '',
+    genre: string = '',
+    note: number = 0
+  ): Promise<MovieResponse> {
     try {
       const params = new URLSearchParams({
         page: (page - 1).toString(),
@@ -59,19 +65,23 @@ export const movieService = {
       if (title) {
         params.append('title', title)
       }
-  
-      const url = `${API_BASE_URL}/movies?${params.toString()}`
-      console.log('URL da requisição:', url)
       
-      const response = await fetch(url)
+      if (genre) {
+        params.append('genre', genre)
+      }
+      
+      if (note > 0) {
+        params.append('note', note.toString())
+      }
+
+      const response = await fetch(`${API_BASE_URL}/movies?${params.toString()}`)
+      
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
       }
-  
+
       const data = await response.json()
-      console.log('Resposta da API:', data) // Debug da resposta
-      
-      return data as MovieResponse // Garantir que o tipo da resposta seja compatível com MovieResponse
+      return data
     } catch (error) {
       console.error('Erro ao buscar filmes:', error)
       throw error

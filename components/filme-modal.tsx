@@ -389,7 +389,50 @@ export default function FilmeModal({ filme, aberto, onClose }: FilmeModalProps) 
                     {favorito ? "Remover dos favoritos" : "Adicionar aos favoritos"}
                   </Button>
 
-                  {/* Outras informações do filme podem ser adicionadas aqui */}
+                  {/* Gêneros */}
+                  {filme.generos && filme.generos.length > 0 && (
+                    <div>
+                      <h3 className="text-sm font-semibold text-zinc-400 mb-2">Gêneros</h3>
+                      <div className="flex flex-wrap gap-2">
+                        {filme.generos.map((genero, index) => (
+                          <Badge 
+                            key={index}
+                            className="bg-zinc-800 hover:bg-zinc-700 text-zinc-200"
+                          >
+                            {genero}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Produtoras */}
+                  {filme.producoes && filme.producoes.length > 0 && (
+                    <div>
+                      <h3 className="text-sm font-semibold text-zinc-400 mb-2">Produção</h3>
+                      <div className="space-y-2">
+                        {filme.producoes.map((producao, index) => (
+                          <div 
+                            key={index}
+                            className="flex items-center gap-2 bg-zinc-800/50 p-2 rounded-md"
+                          >
+                            {producao.logo ? (
+                              <img 
+                                src={producao.logo} 
+                                alt={producao.nome}
+                                className="w-8 h-8 object-contain"
+                              />
+                            ) : (
+                              <div className="w-8 h-8 bg-zinc-700 rounded-md flex items-center justify-center text-zinc-400">
+                                {producao.nome.charAt(0)}
+                              </div>
+                            )}
+                            <span className="text-sm text-zinc-300">{producao.nome}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

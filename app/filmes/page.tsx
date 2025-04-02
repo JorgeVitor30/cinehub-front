@@ -7,6 +7,13 @@ import FilmeCard from "@/components/filme-card"
 import FilmeModal, { type FilmeDetalhado } from "@/components/filme-modal"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Slider } from "@/components/ui/slider"
 import { movieService, type Movie } from "@/app/services/movieService"
 import React from "react"
 import { useRouter, useSearchParams, usePathname } from 'next/navigation'
@@ -36,6 +43,8 @@ export default function FilmesPage() {
   const [ordenarPor, setOrdenarPor] = useState<"recentes" | "avaliacao" | "titulo">("recentes")
   const [totalItems, setTotalItems] = useState(0)
   const ITEMS_POR_PAGINA = 20
+  const [generoSelecionado, setGeneroSelecionado] = useState<string>("")
+  const [notaMinima, setNotaMinima] = useState<number>(0)
 
   const debouncedSearch = useCallback(
     debounce((valor: string) => {
@@ -51,7 +60,7 @@ export default function FilmesPage() {
     debouncedSearch(valor)
   }
 
-  const atualizarParametros = (novaPagina?: number, novoTermo?: string) => {
+  const atualizarParametros = (novaPagina?: number, novoTermo?: string, novoGenero?: string, novaNota?: number) => {
     const params = new URLSearchParams(searchParams.toString())
     
     if (novaPagina !== undefined) {
@@ -63,6 +72,24 @@ export default function FilmesPage() {
         params.set('title', novoTermo)
       } else {
         params.delete('title')
+      }
+      params.set('page', '1')
+    }
+
+    if (novoGenero !== undefined) {
+      if (novoGenero) {
+        params.set('genrer', novoGenero)
+      } else {
+        params.delete('genrer')
+      }
+      params.set('page', '1')
+    }
+
+    if (novaNota !== undefined) {
+      if (novaNota > 0) {
+        params.set('note', novaNota.toString())
+      } else {
+        params.delete('note')
       }
       params.set('page', '1')
     }
@@ -83,7 +110,9 @@ export default function FilmesPage() {
         const response = await movieService.getAllMoviesPage(
           paginaAtual, 
           ITEMS_POR_PAGINA,
-          termoBusca
+          termoBusca,
+          generoSelecionado,
+          notaMinima
         )
         
         setFilmes(response.content || [])
@@ -100,7 +129,7 @@ export default function FilmesPage() {
     }
 
     fetchFilmes()
-  }, [paginaAtual, termoBusca])
+  }, [paginaAtual, termoBusca, generoSelecionado, notaMinima])
 
   useEffect(() => {
     if (inputRef.current) {
@@ -111,15 +140,20 @@ export default function FilmesPage() {
   }, [filmes])
 
   const todosGeneros = React.useMemo(() => {
-    if (!filmes) return []
-    return Array.from(
+    const generosFixos = ["Animation", "Science Fiction", "War"]
+    if (!filmes) return generosFixos
+
+    const generosDoFilme = Array.from(
       new Set(
         filmes
           .filter(filme => filme.genres)
           .flatMap(filme => filme.genres.split(", "))
           .filter(Boolean)
       )
-    ).sort()
+    )
+
+    // Combina os gêneros fixos com os gêneros dos filmes e remove duplicatas
+    return Array.from(new Set([...generosFixos, ...generosDoFilme])).sort()
   }, [filmes])
 
   useEffect(() => {
@@ -232,7 +266,18 @@ export default function FilmesPage() {
       <Navbar />
       <main className="container mx-auto px-4 py-8">
         <section className="mb-8">
-          <h1 className="text-4xl font-bold mb-4">Filmes</h1>
+          <div className="flex items-baseline justify-between mb-4">
+            <h1 className="text-4xl font-bold">Filmes</h1>
+            <p className="text-zinc-400">
+              {totalItems === 0 ? (
+                'Nenhum filme encontrado'
+              ) : totalItems === 1 ? (
+                '1 filme encontrado'
+              ) : (
+                `${totalItems.toLocaleString()} filmes encontrados`
+              )}
+            </p>
+          </div>
           
           <div className="flex gap-2 items-center mb-6">
             <div className="relative flex-1">
@@ -258,6 +303,55 @@ export default function FilmesPage() {
                   <X className="h-4 w-4" />
                 </button>
               )}
+            </div>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="gap-2">
+                  <Filter className="h-4 w-4" />
+                  {generoSelecionado || "Gênero"}
+                  <ChevronDown className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="bg-zinc-900 border-zinc-700">
+                <DropdownMenuItem
+                  className="text-white hover:bg-zinc-800"
+                  onClick={() => {
+                    setGeneroSelecionado("")
+                    atualizarParametros(undefined, undefined, "")
+                  }}
+                >
+                  Todos os gêneros
+                </DropdownMenuItem>
+                {todosGeneros.map((genero) => (
+                  <DropdownMenuItem
+                    key={genero}
+                    className="text-white hover:bg-zinc-800"
+                    onClick={() => {
+                      setGeneroSelecionado(genero)
+                      atualizarParametros(undefined, undefined, genero)
+                    }}
+                  >
+                    {genero}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <div className="flex items-center gap-2 bg-zinc-900 rounded-md p-2 border border-zinc-700">
+              <span className="text-sm whitespace-nowrap">Nota mínima:</span>
+              <Slider
+                min={0}
+                max={10}
+                step={0.5}
+                value={[notaMinima]}
+                onValueChange={(value) => {
+                  setNotaMinima(value[0])
+                  atualizarParametros(undefined, undefined, undefined, value[0])
+                }}
+                className="w-32"
+              />
+              <span className="text-sm font-medium w-8">{notaMinima}</span>
             </div>
           </div>
 
