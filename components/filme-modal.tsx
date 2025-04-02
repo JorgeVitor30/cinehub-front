@@ -3,12 +3,13 @@
 import { useState, useEffect } from "react"
 import Image from "next/image"
 import { Clock, Calendar, Globe, Star, DollarSign, Check, X, Heart, Loader2, Tag, Pencil, Save } from "lucide-react"
-import { Dialog, DialogContent } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
 import { Badge } from "@/components/ui/badge"
 import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
+import { VisuallyHidden } from "@/components/ui/visually-hidden"
 
 export interface Producao {
   nome: string
@@ -159,16 +160,24 @@ export default function FilmeModal({ filme, aberto, onClose }: FilmeModalProps) 
   return (
     <Dialog open={aberto} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="w-[95%] max-w-4xl bg-zinc-900 text-white border-zinc-800 p-0 overflow-hidden">
+        <VisuallyHidden>
+          <DialogTitle>Detalhes do filme {filme.titulo}</DialogTitle>
+        </VisuallyHidden>
+        
         <div className="max-h-[85vh] overflow-hidden flex flex-col">
-          {/* Banner do filme */}
+          {/* Banner do filme - Ajustado para melhor responsividade */}
           <div className="relative w-full h-[250px] flex-shrink-0">
-            <Image
-              src={filme.banner || filme.capa}
-              alt={filme.titulo}
-              fill
-              className="object-cover"
-              sizes="(max-width: 768px) 100vw, 1200px"
-            />
+            <div className="absolute inset-0">
+              <Image
+                src={filme.banner || filme.capa}
+                alt={filme.titulo}
+                fill
+                priority
+                className="object-cover"
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 100vw, 1200px"
+                quality={85}
+              />
+            </div>
             <div className="absolute inset-0 bg-gradient-to-t from-zinc-900 via-zinc-900/60 to-transparent" />
 
             {/* Botão de fechar */}
@@ -325,25 +334,25 @@ export default function FilmeModal({ filme, aberto, onClose }: FilmeModalProps) 
                         <span className="text-2xl font-bold text-amber-500">{avaliacaoTemporaria}/10</span>
                       </div>
 
-                      <Slider
-                        min={1}
-                        max={10}
-                        step={1}
-                        value={[avaliacaoTemporaria]}
-                        onValueChange={(value) => setAvaliacaoTemporaria(value[0])}
-                        className="w-full"
-                      />
+                <Slider
+                  min={1}
+                  max={10}
+                  step={1}
+                  value={[avaliacaoTemporaria]}
+                  onValueChange={(value) => setAvaliacaoTemporaria(value[0])}
+                  className="w-full"
+                />
 
-                      <div className="flex justify-between items-center">
-                        <div>
-                          {erro && <p className="text-red-500 text-sm">{erro}</p>}
-                          {sucessoAvaliacao && (
-                            <p className="text-green-500 text-sm flex items-center">
-                              <Check className="h-3 w-3 mr-1" />
-                              Avaliação registrada com sucesso!
-                            </p>
-                          )}
-                        </div>
+                <div className="flex justify-between items-center">
+                  <div>
+                    {erro && <p className="text-red-500 text-sm">{erro}</p>}
+                    {sucessoAvaliacao && (
+                      <p className="text-green-500 text-sm flex items-center">
+                        <Check className="h-3 w-3 mr-1" />
+                        Avaliação registrada com sucesso!
+                      </p>
+                    )}
+                  </div>
 
                         <Button
                           onClick={handleAvaliar}

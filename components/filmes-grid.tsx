@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import FilmeCard from "./filme-card"
 import FilmeModal, { type FilmeDetalhado } from "./filme-modal"
 import { movieService, type Movie } from "@/app/services/movieService"
+import Image from "next/image"
 
 interface FilmesGridProps {
   categoria: "trending" | "new" | "classics"
@@ -105,7 +106,15 @@ export default function FilmesGrid({ categoria }: FilmesGridProps) {
             }
             setFilmeAberto(filmeDetalhado)
           }}
-        />
+        >
+          <Image
+            src={filme.capa || "/placeholder.svg"}
+            alt={filme.titulo}
+            onError={(e) => {
+              e.currentTarget.src = "/placeholder.svg"
+            }}
+          />
+        </FilmeCard>
       ))}
 
       {filmeAberto && (
