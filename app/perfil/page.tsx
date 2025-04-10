@@ -543,7 +543,7 @@ export default function PerfilPage() {
                   Recomendações
                 </TabsTrigger>
                 <TabsTrigger
-                  value="estatisticas"
+                  value="estatísticas"
                   className="data-[state=active]:bg-amber-500 data-[state=active]:text-black"
                 >
                   Estatísticas
