@@ -8,7 +8,10 @@ const nextConfig = {
         hostname: 'image.tmdb.org',
         pathname: '/t/p/**',
       },
-    ],
+    ]
+  },
+  experimental: {
+    serverActions: true,
   },
 }
 
