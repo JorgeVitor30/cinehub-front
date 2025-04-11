@@ -1,6 +1,5 @@
 "use client"
 
-import { useState } from "react"
 import Image from "next/image"
 import {
   Mail,
@@ -37,6 +36,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { authService } from "@/app/services/authService"
+import { useState, useEffect } from "react"
+import { userService } from "@/app/services/userService"
+import { format } from "date-fns"
+import { ptBR } from "date-fns/locale"
 
 // Dados mockados do usuário
 const usuarioMock = {
@@ -66,6 +70,16 @@ const usuarioMock = {
       avaliacoesNecessarias: 150,
     },
   },
+}
+
+export interface User {
+  id: string
+  name: string
+  email: string
+  photo?: string
+  role: string,
+  visibilityPublic: boolean,
+  createdAt: string
 }
 
 // Filmes favoritos mockados
@@ -342,12 +356,68 @@ export default function PerfilPage() {
   const [editarPerfilAberto, setEditarPerfilAberto] = useState(false)
   const [alterarSenhaAberto, setAlterarSenhaAberto] = useState(false)
   const [fotoModalAberto, setFotoModalAberto] = useState(false)
+  const [userData, setUserData] = useState<User | null>(null)
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
 
   // Função para encontrar o filme detalhado pelo ID
   const encontrarFilmeDetalhado = (id: string) => {
     const filmeEncontrado = filmesFavoritosMock.find((filme) => filme.id === id)
     return filmeEncontrado || null
   }
+
+  // Função de Visualizar Photo
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+  
+    setSelectedFile(file);
+  
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setPreviewUrl(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Função de Upload Photo
+  const handleUpload = async () => {
+    if (!selectedFile || !userData) return;
+  
+    try {
+      await userService.postUserPhotoById(userData.id, selectedFile);
+      const updatedUser = await userService.getUserById(userData.id);
+      setUserData(updatedUser);
+  
+      setFotoModalAberto(false); // <-- fecha o modal após salvar com sucesso
+    } catch (error) {
+      console.error("Erro ao enviar a foto:", error);
+      alert("Erro ao enviar a foto.");
+    }
+  };
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const decodedUser = await authService.getUserFromToken()
+
+        if (decodedUser?.nameid) {
+          const user = await userService.getUserById(decodedUser.nameid)
+          setUserData(user)
+        }
+      } catch (error) {
+        console.error("Erro ao buscar dados do usuário:", error)
+      }
+    }
+
+    fetchUser()
+  }, [])
+
+  if (!userData) {
+    return <div>Carregando dados do usuário...</div>
+  }
+  
 
   // Verificar se deve mostrar scroll
   const mostrarScrollFavoritos = filmesFavoritosMock.length > 7
@@ -370,8 +440,8 @@ export default function PerfilPage() {
                 <div className="flex flex-col items-center mb-6">
                   <div className="relative mb-4">
                     <Avatar className="w-24 h-24 border-2 border-amber-500">
-                      <AvatarImage src={usuarioMock.avatar} alt={usuarioMock.nome} />
-                      <AvatarFallback className="bg-zinc-800 text-xl">{usuarioMock.nome.charAt(0)}</AvatarFallback>
+                      <AvatarImage src={userData.photo} alt={userData.name} />
+                      <AvatarFallback className="bg-zinc-800 text-xl">{userData.name.charAt(0)}</AvatarFallback>
                     </Avatar>
                     <Button
                       size="icon"
@@ -382,8 +452,8 @@ export default function PerfilPage() {
                       <span className="sr-only">Alterar foto</span>
                     </Button>
                   </div>
-                  <h2 className="text-xl font-bold">{usuarioMock.nome}</h2>
-                  <p className="text-zinc-400 text-sm">{usuarioMock.email}</p>
+                  <h2 className="text-xl font-bold">{userData.name}</h2>
+                  <p className="text-zinc-400 text-sm">{userData.email}</p>
                 </div>
 
                 <div className="space-y-4">
@@ -393,7 +463,7 @@ export default function PerfilPage() {
                     </div>
                     <div>
                       <p className="text-sm text-zinc-400">Email</p>
-                      <p className="font-medium">{usuarioMock.email}</p>
+                      <p className="font-medium">{userData.email}</p>
                     </div>
                   </div>
 
@@ -403,7 +473,7 @@ export default function PerfilPage() {
                     </div>
                     <div>
                       <p className="text-sm text-zinc-400">Membro desde</p>
-                      <p className="font-medium">{usuarioMock.dataCadastro}</p>
+                      <p className="font-medium">{format(new Date(userData.createdAt), "d 'de' MMMM 'de' yyyy", { locale: ptBR })}</p>
                     </div>
                   </div>
 
@@ -863,10 +933,10 @@ export default function PerfilPage() {
 
           <div className="flex flex-col items-center justify-center gap-6 py-4">
             <div className="relative w-32 h-32">
-              <Avatar className="w-32 h-32 border-2 border-amber-500">
-                <AvatarImage src={usuarioMock.avatar} alt={usuarioMock.nome} />
-                <AvatarFallback className="bg-zinc-800 text-3xl">{usuarioMock.nome.charAt(0)}</AvatarFallback>
-              </Avatar>
+            <Avatar className="w-32 h-32 border-2 border-amber-500">
+              <AvatarImage src={previewUrl || userData.photo} alt={userData.name} />
+              <AvatarFallback className="bg-zinc-800 text-3xl">{userData.name.charAt(0)}</AvatarFallback>
+            </Avatar>
             </div>
 
             <div className="grid w-full gap-4">
@@ -878,7 +948,7 @@ export default function PerfilPage() {
                   <Upload className="h-4 w-4 text-amber-500" />
                   Escolher arquivo
                 </label>
-                <input id="foto-perfil" type="file" accept="image/*" className="hidden" />
+                <input id="foto-perfil" type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
                 <p className="text-xs text-zinc-500">JPG, PNG ou GIF. Máximo 2MB.</p>
               </div>
             </div>
@@ -887,12 +957,16 @@ export default function PerfilPage() {
           <DialogFooter>
             <Button
               variant="outline"
-              onClick={() => setFotoModalAberto(false)}
+              onClick={() => setFotoModalAberto(false)} // fecha o modal no cancelar
               className="border-zinc-700 text-zinc-300 hover:bg-zinc-800 hover:text-white"
             >
               Cancelar
             </Button>
-            <Button className="bg-gradient-to-r from-amber-500 to-red-600 hover:from-amber-600 hover:to-red-700 text-white border-0">
+
+            <Button
+              className="bg-gradient-to-r from-amber-500 to-red-600 hover:from-amber-600 hover:to-red-700 text-white border-0"
+              onClick={handleUpload} // chama upload ao clicar
+            >
               Salvar foto
             </Button>
           </DialogFooter>

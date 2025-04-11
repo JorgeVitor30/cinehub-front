@@ -59,5 +59,31 @@ export const authService = {
   isAuthenticated(): boolean {
     if (typeof window === 'undefined') return false
     return !!this.getToken()
+  },
+
+  async getUserFromToken() {
+    const token = this.getToken()
+    if (!token) return null
+
+    try {
+      const response = await fetch(`${API_URL}/auth/decode`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ token }),
+      })
+
+      if (!response.ok) {
+        console.error('Erro ao decodificar token')
+        return null
+      }
+
+      const data = await response.json()
+      return data
+    } catch (err) {
+      console.error('Erro na requisição de decodificação:', err)
+      return null
+    }
   }
 }
