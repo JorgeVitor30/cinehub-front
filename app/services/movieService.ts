@@ -74,7 +74,17 @@ export const movieService = {
         params.append('note', note.toString())
       }
 
-      const response = await fetch(`${API_BASE_URL}/movies?${params.toString()}`)
+      const token = document.cookie
+      .split('; ')
+      .find(row => row.startsWith('auth_token='))
+      ?.split('=')[1]
+
+      const response = await fetch(`${API_BASE_URL}/movies?${params.toString()}`, {
+        headers: {
+          'Authorization': `Bearer ${token ?? ''}`,
+          'Content-Type': 'application/json'
+        }
+      })
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
