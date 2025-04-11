@@ -45,8 +45,8 @@ import { ptBR } from "date-fns/locale"
 // Dados mockados do usuário
 const usuarioMock = {
   id: "1",
-  nome: "João Silva",
-  email: "joao.silva@email.com",
+  nome: "TESTE",
+  email: "teste@email.com",
   avatar: "/placeholder.svg?height=200&width=200",
   dataCadastro: "Março 2023",
   totalFilmesAssistidos: 45,
@@ -504,49 +504,6 @@ export default function PerfilPage() {
 
             <Card className="bg-zinc-900 border-zinc-800 text-white">
               <CardHeader className="pb-2">
-                <CardTitle className="text-xl">Configurações</CardTitle>
-                <CardDescription className="text-zinc-400">Gerencie sua conta</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <Button
-                  variant="outline"
-                  className="w-full justify-between border-zinc-700 hover:bg-zinc-800 hover:text-amber-500"
-                  onClick={() => setEditarPerfilAberto(true)}
-                >
-                  <div className="flex items-center">
-                    <Edit className="mr-2 h-4 w-4" />
-                    Editar perfil
-                  </div>
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-
-                <Button
-                  variant="outline"
-                  className="w-full justify-between border-zinc-700 hover:bg-zinc-800 hover:text-amber-500"
-                  onClick={() => setAlterarSenhaAberto(true)}
-                >
-                  <div className="flex items-center">
-                    <Lock className="mr-2 h-4 w-4" />
-                    Alterar senha
-                  </div>
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-
-                <Button
-                  variant="outline"
-                  className="w-full justify-between border-zinc-700 hover:bg-zinc-800 hover:text-red-500"
-                >
-                  <div className="flex items-center">
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Sair
-                  </div>
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-zinc-900 border-zinc-800 text-white">
-              <CardHeader className="pb-2">
                 <CardTitle className="text-xl">Seu Ranking</CardTitle>
                 <CardDescription className="text-zinc-400">Sua posição entre os avaliadores</CardDescription>
               </CardHeader>
@@ -586,6 +543,49 @@ export default function PerfilPage() {
                     </div>
                   </div>
                 </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-zinc-900 border-zinc-800 text-white">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-xl">Configurações</CardTitle>
+                <CardDescription className="text-zinc-400">Gerencie sua conta</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Button
+                  variant="outline"
+                  className="w-full justify-between border-zinc-700 hover:bg-zinc-800 hover:text-amber-500"
+                  onClick={() => setEditarPerfilAberto(true)}
+                >
+                  <div className="flex items-center">
+                    <Edit className="mr-2 h-4 w-4" />
+                    Editar perfil
+                  </div>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+
+                <Button
+                  variant="outline"
+                  className="w-full justify-between border-zinc-700 hover:bg-zinc-800 hover:text-amber-500"
+                  onClick={() => setAlterarSenhaAberto(true)}
+                >
+                  <div className="flex items-center">
+                    <Lock className="mr-2 h-4 w-4" />
+                    Alterar senha
+                  </div>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+
+                <Button
+                  variant="outline"
+                  className="w-full justify-between border-zinc-700 hover:bg-zinc-800 hover:text-red-500"
+                >
+                  <div className="flex items-center">
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Sair
+                  </div>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
               </CardContent>
             </Card>
           </div>
