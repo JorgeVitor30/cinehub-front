@@ -88,6 +88,14 @@ export default function Navbar() {
                 Filmes
               </Link>
               <Link
+                href="/usuarios"
+                className={`text-sm font-medium hover:text-amber-500 transition pb-1 ${
+                  isActive("/usuarios") ? "border-b-2 border-amber-500 text-white" : "text-zinc-400"
+                }`}
+              >
+                Usuários
+              </Link>
+              <Link
                 href="/perfil"
                 className={`text-sm font-medium hover:text-amber-500 transition pb-1 ${
                   isActive("/perfil") ? "border-b-2 border-amber-500 text-white" : "text-zinc-400"
