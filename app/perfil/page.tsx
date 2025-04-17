@@ -258,6 +258,7 @@ export default function PerfilPage() {
   const [filmeAberto, setFilmeAberto] = useState<FilmeDetalhado | null>(null)
   const [editarPerfilAberto, setEditarPerfilAberto] = useState(false)
   const [alterarSenhaAberto, setAlterarSenhaAberto] = useState(false)
+  const [abaAtual, setAbaAtual] = useState("favoritos")
   const [fotoModalAberto, setFotoModalAberto] = useState(false)
   const [userData, setUserData] = useState<User | null>(null)
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -495,7 +496,7 @@ export default function PerfilPage() {
 
           {/* Coluna da direita - Conteúdo principal */}
           <div className="md:col-span-2">
-            <Tabs defaultValue="favoritos" className="space-y-6">
+            <Tabs defaultValue="favoritos" className="space-y-6" onValueChange={setAbaAtual}>
               <TabsList className="bg-zinc-800 border-zinc-700 p-1">
                 <TabsTrigger
                   value="favoritos"
@@ -558,8 +559,9 @@ export default function PerfilPage() {
                                 height={750}
                                 className="w-full h-auto rounded-lg shadow-md transition-transform duration-300 group-hover:scale-105"
                               />
-                              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-60 transition-opacity duration-300 rounded-lg flex items-center justify-center">
-                                <Heart className="text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-60 transition-opacity duration-300 rounded-lg flex flex-col items-center justify-center gap-2">
+                                <Heart className="text-red-500 fill-red-500 opacity-100 transition-opacity duration-300" />
+                                <p className="text-white text-center text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300 px-2">{filmeDetalhado.titulo}</p>
                               </div>
                             </div>
                           )
@@ -571,8 +573,7 @@ export default function PerfilPage() {
                       </div>
                     )}
                   </CardContent>
-                </Card>
-              </TabsContent>
+                </Card>              </TabsContent>
 
               {/* Aba de Avaliados */}
               <TabsContent value="avaliados" className="space-y-6">
@@ -796,7 +797,7 @@ export default function PerfilPage() {
       </main>
 
       {/* Modais */}
-      {filmeAberto && <FilmeModal filme={filmeAberto} aberto={!!filmeAberto} onClose={() => setFilmeAberto(null)} />}
+      {filmeAberto && <FilmeModal filme={filmeAberto} aberto={!!filmeAberto} onClose={() => setFilmeAberto(null)} isFavorited={abaAtual === "favoritos"} />}
       <EditarPerfilModal
         aberto={editarPerfilAberto}
         onClose={() => setEditarPerfilAberto(false)}

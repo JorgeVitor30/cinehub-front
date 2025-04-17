@@ -36,6 +36,7 @@ interface FilmeModalProps {
   filme: FilmeDetalhado | null
   aberto: boolean
   onClose: () => void
+  isFavorited?: boolean
 }
 
 const avaliarAPI = async (filmeId: string, nota: number): Promise<{ success: boolean }> => {
@@ -78,25 +79,29 @@ const keywordsMock: Record<string, string[]> = {
   "20": ["Gotham", "Doença mental", "Comédia", "Violência", "Sociedade"],
 }
 
-export default function FilmeModal({ filme, aberto, onClose }: FilmeModalProps) {
+export default function FilmeModal({ filme, aberto, onClose, isFavorited = false }: FilmeModalProps) {
   const [avaliacaoUsuario, setAvaliacaoUsuario] = useState<number | null>(null)
   const [avaliacaoTemporaria, setAvaliacaoTemporaria] = useState<number>(0)
   const [isAvaliando, setIsAvaliando] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
   const [sucessoAvaliacao, setSucessoAvaliacao] = useState(false)
-  const [favorito, setFavorito] = useState(false)
+  const [favorito, setFavorito] = useState(isFavorited)
   const [anotacao, setAnotacao] = useState<string>("")
   const [anotacaoSalva, setAnotacaoSalva] = useState<string>("")
   const [editandoAnotacao, setEditandoAnotacao] = useState(false)
   const [initialLoad, setInitialLoad] = useState(true)
 
   const handleFavoritar = () => {
-    setFavorito(!favorito)
+    if (!initialLoad) {
+      setFavorito(!favorito)
+    }
   }
 
-  // Resetar estados quando o filme muda
+  // Atualizar estado inicial
   useEffect(() => {
     if (filme) {
+      setFavorito(isFavorited)
+      setInitialLoad(false)
       // Aqui você poderia buscar a avaliação do usuário de uma API
       // Por enquanto, vamos simular aleatoriamente se o usuário já avaliou ou não
       const jaAvaliou = Math.random() > 0.7
@@ -104,8 +109,7 @@ export default function FilmeModal({ filme, aberto, onClose }: FilmeModalProps) 
       setAvaliacaoUsuario(avaliacaoAleatoria)
       setAvaliacaoTemporaria(avaliacaoAleatoria || 5)
 
-      // Inicializar o estado de favorito
-      setFavorito(false)
+      // Resetar estados de erro e sucesso
       setErro(null)
       setSucessoAvaliacao(false)
     }
