@@ -72,135 +72,20 @@ const usuarioMock = {
   },
 }
 
+import { type Movie } from "@/app/services/userService"
+
 export interface User {
   id: string
   name: string
   email: string
   photo?: string
-  role: string,
-  visibilityPublic: boolean,
+  role: string
+  visibilityPublic: boolean
   createdAt: string
+  favorites: Movie[]
 }
 
-// Filmes favoritos mockados
-const filmesFavoritosMock = [
-  {
-    id: "1",
-    titulo: "Inception",
-    capa: "https://image.tmdb.org/t/p/w500//oYuLEt3zVCKq57qu2F8dT7NIa6f.jpg",
-    banner: "https://image.tmdb.org/t/p/original/8ZTVqvKDQ8emSGUEMjsS4yHAwrp.jpg",
-    avaliacao: 8.8,
-    duracao: "2h 28m",
-    ano: 2010,
-    generos: ["Ação", "Ficção Científica", "Aventura"],
-    lingua: "Inglês",
-    orcamento: "$160 milhões",
-    descricao: "Um ladrão que rouba segredos corporativos através do uso da tecnologia de compartilhamento de sonhos.",
-    producoes: [{ nome: "Warner Bros. Pictures" }, { nome: "Legendary Pictures" }, { nome: "Syncopy" }],
-  },
-  {
-    id: "13",
-    titulo: "O Senhor dos Anéis: O Retorno do Rei",
-    capa: "https://image.tmdb.org/t/p/w500/pbrkL804c8yAv3zBZR4QPEafpAR.jpg",
-    banner: "https://image.tmdb.org/t/p/original/lXhgCODAbBXL5buk9yEmTpOoOgR.jpg",
-    avaliacao: 9.0,
-    duracao: "3h 21m",
-    ano: 2003,
-    generos: ["Aventura", "Fantasia", "Ação"],
-    lingua: "Inglês",
-    orcamento: "$94 milhões",
-    descricao:
-      "Gandalf e Aragorn lideram o Mundo dos Homens contra o exército de Sauron para desviar o olhar dele do Frodo e Sam.",
-    producoes: [{ nome: "New Line Cinema" }, { nome: "WingNut Films" }, { nome: "The Saul Zaentz Company" }],
-  },
-  {
-    id: "17",
-    titulo: "Tudo em Todo Lugar ao Mesmo Tempo",
-    capa: "https://image.tmdb.org/t/p/w500/pbrkL804c8yAv3zBZR4QPEafpAR.jpg",
-    banner: "https://image.tmdb.org/t/p/original/51tqzRtKMMZEYUpSYkrUE7v9ehm.jpg",
-    avaliacao: 8.7,
-    duracao: "2h 19m",
-    ano: 2022,
-    generos: ["Ação", "Aventura", "Ficção Científica"],
-    lingua: "Inglês",
-    orcamento: "$25 milhões",
-    descricao:
-      "Uma imigrante chinesa se envolve em uma aventura louca onde só ela pode salvar o mundo explorando outros universos.",
-    producoes: [{ nome: "A24" }, { nome: "Ley Line Entertainment" }, { nome: "AGBO" }],
-  },
-  {
-    id: "19",
-    titulo: "Parasita",
-    capa: "https://image.tmdb.org/t/p/w500/pbrkL804c8yAv3zBZR4QPEafpAR.jpg",
-    banner: "https://image.tmdb.org/t/p/original/ApiBzeaa95TNYliSbQ8pJv4Fje7.jpg",
-    avaliacao: 8.9,
-    duracao: "2h 12m",
-    ano: 2019,
-    generos: ["Drama", "Thriller", "Comédia"],
-    lingua: "Coreano",
-    orcamento: "$11 milhões",
-    descricao:
-      "A família Kim, pobre e desempregada, se infiltra na vida da rica família Park, mas um incidente ameaça seu novo estilo de vida.",
-    producoes: [{ nome: "Barunson E&A" }, { nome: "CJ Entertainment" }],
-  },
-  {
-    id: "3",
-    titulo: "Pobres Criaturas",
-    capa: "https://image.tmdb.org/t/p/w500//oYuLEt3zVCKq57qu2F8dT7NIa6f.jpg",
-    banner: "https://image.tmdb.org/t/p/original/jkKVLzLWjSvTnc84VzeljhSy6j8.jpg",
-    avaliacao: 8.5,
-    duracao: "2h 21m",
-    ano: 2023,
-    generos: ["Fantasia", "Comédia", "Drama"],
-    lingua: "Inglês",
-    orcamento: "$35 milhões",
-    descricao: "A jovem Bella é trazida de volta à vida pelo cientista Dr. Godwin Baxter.",
-    producoes: [{ nome: "Searchlight Pictures" }, { nome: "Film4 Productions" }, { nome: "Element Pictures" }],
-  },
-  {
-    id: "6",
-    titulo: "Godzilla e Kong: O Novo Império",
-    capa: "https://image.tmdb.org/t/p/w500/pbrkL804c8yAv3zBZR4QPEafpAR.jpg",
-    banner: "https://image.tmdb.org/t/p/original/zxnfMi3wMpWwmGdCeqOficMnpS.jpg",
-    avaliacao: 7.2,
-    duracao: "1h 55m",
-    ano: 2024,
-    generos: ["Ação", "Ficção Científica", "Aventura"],
-    lingua: "Inglês",
-    orcamento: "$135 milhões",
-    descricao: "Godzilla e Kong unem forças contra uma ameaça oculta que coloca suas existências em risco.",
-    producoes: [{ nome: "Warner Bros. Pictures" }, { nome: "Legendary Pictures" }],
-  },
-  {
-    id: "7",
-    titulo: "Kung Fu Panda 4",
-    capa: "https://image.tmdb.org/t/p/w500/pbrkL804c8yAv3zBZR4QPEafpAR.jpg",
-    banner: "https://image.tmdb.org/t/p/original/kHlX3oqdD4VGaLpB8O78M25KqdX.jpg",
-    avaliacao: 7.0,
-    duracao: "1h 34m",
-    ano: 2024,
-    generos: ["Animação", "Comédia", "Ação"],
-    lingua: "Inglês",
-    orcamento: "$85 milhões",
-    descricao: "Po precisa treinar um novo Guerreiro Dragão enquanto enfrenta uma nova vilã poderosa.",
-    producoes: [{ nome: "DreamWorks Animation" }, { nome: "Universal Pictures" }],
-  },
-  {
-    id: "8",
-    titulo: "Ghostbusters: Apocalipse de Gelo",
-    capa: "https://image.tmdb.org/t/p/w500/pbrkL804c8yAv3zBZR4QPEafpAR.jpg",
-    banner: "https://image.tmdb.org/t/p/original/qVKcLMVJdwm8nRMhUggiNd5VNVJ.jpg",
-    avaliacao: 6.9,
-    duracao: "1h 58m",
-    ano: 2024,
-    generos: ["Comédia", "Fantasia", "Aventura"],
-    lingua: "Inglês",
-    orcamento: "$100 milhões",
-    descricao: "Os Caça-Fantasmas enfrentam uma ameaça sobrenatural que traz o inverno eterno.",
-    producoes: [{ nome: "Columbia Pictures" }, { nome: "Ghost Corps" }, { nome: "Sony Pictures" }],
-  },
-]
-
+  
 // Filmes avaliados mockados
 const filmesAvaliadosMock = [
   {
@@ -351,6 +236,24 @@ const filmesRecomendadosMock = [
   },
 ]
 
+// Função para mapear os filmes da API para o formato esperado pelo componente
+const mapMovieToFilmeDetalhado = (movie: Movie): FilmeDetalhado => {
+  return {
+    id: movie.id,
+    titulo: movie.title,
+    capa: movie.posterPhotoUrl,
+    banner: movie.backPhotoUrl,
+    avaliacao: movie.voteAverage,
+    duracao: `${Math.floor(movie.runTime / 60)}h ${movie.runTime % 60}m`,
+    ano: new Date(movie.releaseDate).getFullYear(),
+    generos: movie.genres.split(',').map(g => g.trim()),
+    lingua: movie.originalLanguage,
+    orcamento: `$${(movie.budget / 1000000).toFixed(0)} milhões`,
+    descricao: movie.overview,
+    producoes: movie.productions.split(',').map(p => ({ nome: p.trim() })),
+  }
+}
+
 export default function PerfilPage() {
   const [filmeAberto, setFilmeAberto] = useState<FilmeDetalhado | null>(null)
   const [editarPerfilAberto, setEditarPerfilAberto] = useState(false)
@@ -363,8 +266,8 @@ export default function PerfilPage() {
 
   // Função para encontrar o filme detalhado pelo ID
   const encontrarFilmeDetalhado = (id: string) => {
-    const filmeEncontrado = filmesFavoritosMock.find((filme) => filme.id === id)
-    return filmeEncontrado || null
+    const filmeEncontrado = userData?.favorites?.find((filme) => filme.id === id)
+    return filmeEncontrado ? mapMovieToFilmeDetalhado(filmeEncontrado) : null
   }
 
   // Função de Visualizar Photo
@@ -420,7 +323,7 @@ export default function PerfilPage() {
   
 
   // Verificar se deve mostrar scroll
-  const mostrarScrollFavoritos = filmesFavoritosMock.length > 7
+  const mostrarScrollFavoritos = (userData?.favorites?.length ?? 0) > 7
   const mostrarScrollAvaliados = filmesAvaliadosMock.length > 7
   const mostrarScrollRecomendados = filmesRecomendadosMock.length > 7
 
@@ -630,64 +533,41 @@ export default function PerfilPage() {
                         <CardDescription className="text-zinc-400">Seus filmes marcados como favoritos</CardDescription>
                       </div>
                       <Badge className="bg-amber-500 text-black hover:bg-amber-600">
-                        {filmesFavoritosMock.length} filmes
+                        {userData?.favorites?.length} filmes
                       </Badge>
                     </div>
                   </CardHeader>
                   <CardContent>
-                    {filmesFavoritosMock.length > 0 ? (
+                    {userData?.favorites?.length > 0 ? (
                       <div
-                        className={`space-y-4 ${
-                          mostrarScrollFavoritos ? "max-h-[600px] overflow-y-auto pr-2 custom-scrollbar" : ""
-                        }`}
+                        className={`grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-4 ${mostrarScrollFavoritos ? "overflow-x-auto" : ""}
+                          ${mostrarScrollFavoritos ? "pb-4" : ""}`}
                       >
-                        {filmesFavoritosMock.map((filme) => (
-                          <div
-                            key={filme.id}
-                            className="flex items-center gap-4 p-3 rounded-lg bg-zinc-800 hover:bg-zinc-700 transition-colors cursor-pointer"
-                            onClick={() => setFilmeAberto(filme)}
-                          >
-                            <div className="relative w-16 h-24 flex-shrink-0 overflow-hidden rounded">
+                        {userData?.favorites?.map((filme) => {
+                          const filmeDetalhado = mapMovieToFilmeDetalhado(filme)
+                          return (
+                            <div
+                              key={filme.id}
+                              className="relative group cursor-pointer"
+                              onClick={() => setFilmeAberto(filmeDetalhado)}
+                            >
                               <Image
-                                src={filme.capa || "/placeholder.svg"}
-                                alt={filme.titulo}
-                                fill
-                                className="object-cover"
+                                src={filmeDetalhado.capa || "/placeholder.svg"}
+                                alt={filmeDetalhado.titulo}
+                                width={500}
+                                height={750}
+                                className="w-full h-auto rounded-lg shadow-md transition-transform duration-300 group-hover:scale-105"
                               />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <h3 className="font-semibold text-white truncate">{filme.titulo}</h3>
-                              <div className="flex items-center gap-2 text-sm text-zinc-400">
-                                <span>{filme.ano}</span>
-                                <span>•</span>
-                                <span>{filme.duracao}</span>
-                              </div>
-                              <div className="flex items-center mt-1">
-                                <Star className="h-4 w-4 text-amber-500 fill-amber-500 mr-1" />
-                                <span className="text-sm font-medium">{filme.avaliacao.toFixed(1)}/10</span>
+                              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-60 transition-opacity duration-300 rounded-lg flex items-center justify-center">
+                                <Heart className="text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                               </div>
                             </div>
-                            <div className="flex-shrink-0 flex gap-2">
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                className="h-8 w-8 rounded-full text-red-500 hover:text-red-600 hover:bg-zinc-700"
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  // Aqui você removeria o filme dos favoritos
-                                }}
-                              >
-                                <Heart className="h-5 w-5 fill-red-500" />
-                              </Button>
-                            </div>
-                          </div>
-                        ))}
+                          )
+                        })}
                       </div>
                     ) : (
                       <div className="text-center py-8">
-                        <Heart className="h-12 w-12 mx-auto text-zinc-700 mb-3" />
-                        <h3 className="text-lg font-medium text-zinc-400">Nenhum filme favorito</h3>
-                        <p className="text-zinc-500 text-sm mt-1">Adicione filmes aos favoritos para vê-los aqui</p>
+                        <p className="text-zinc-400">Você ainda não tem filmes favoritos.</p>
                       </div>
                     )}
                   </CardContent>

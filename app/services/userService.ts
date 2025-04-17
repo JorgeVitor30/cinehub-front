@@ -1,4 +1,5 @@
 import { authService } from "./authService"
+import { Movie } from "@/app/services/movieService"
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5129/api'
 
@@ -8,11 +9,16 @@ export interface CreateUserRequest {
   password: string
 }
 
+
 export interface User {
   id: string
   name: string
   email: string
-  // adicione mais campos conforme sua API
+  photo?: string
+  role: string
+  visibilityPublic: boolean
+  createdAt: string
+  favorites: Movie[]
 }
 
 export const userService = {
