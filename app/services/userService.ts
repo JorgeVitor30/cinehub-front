@@ -2,6 +2,12 @@ import { authService } from "./authService"
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5129/api'
 
+export interface CreateUserRequest {
+  name: string
+  email: string
+  password: string
+}
+
 export interface User {
   id: string
   name: string
@@ -10,6 +16,27 @@ export interface User {
 }
 
 export const userService = {
+  async createUser(data: CreateUserRequest): Promise<User> {
+    try {
+      const response = await fetch(`${API_URL}/users`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      })
+
+      if (!response.ok) {
+        throw response
+      }
+
+      const user: User = await response.json()
+      return user
+    } catch (error) {
+      console.error('Erro ao criar usuário:', error)
+      throw error
+    }
+  },
   async getUserById(id: string): Promise<User | null> {
     try {
       const token = authService.getToken()

@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { authService } from "@/app/services/authService"
+import { userService } from "@/app/services/userService"
 import { useAuth } from "@/hooks/useAuth"
 
 export default function AuthPage() {
@@ -31,8 +32,7 @@ export default function AuthPage() {
   const [registerData, setRegisterData] = useState({
     name: "",
     email: "",
-    password: "",
-    confirmPassword: "",
+    password: ""
   })
 
   // Manipuladores de formulário de login
@@ -54,7 +54,7 @@ export default function AuthPage() {
 
     // Validação básica
     if (!loginData.email || !loginData.password) {
-      setFormError("Preencha todos os campos obrigatórios")
+      setFormError("Preencha todos os campos")
       return
     }
 
@@ -83,12 +83,7 @@ export default function AuthPage() {
 
     // Validação básica
     if (!registerData.name || !registerData.email || !registerData.password) {
-      setFormError("Preencha todos os campos obrigatórios")
-      return
-    }
-
-    if (registerData.password !== registerData.confirmPassword) {
-      setFormError("As senhas não coincidem")
+      setFormError("Preencha todos os campos")
       return
     }
 
@@ -100,15 +95,33 @@ export default function AuthPage() {
     try {
       setIsLoading(true)
 
-      // Simulação de cadastro (aqui você implementaria a chamada real à API)
-      await new Promise((resolve) => setTimeout(resolve, 1500))
+      // Criar o novo usuário
+      await userService.createUser({
+        name: registerData.name,
+        email: registerData.email,
+        password: registerData.password
+      })
 
-      console.log("Cadastro realizado com sucesso:", registerData)
+      // Fazer login automaticamente após o cadastro
+      await authService.login({
+        email: registerData.email,
+        password: registerData.password
+      })
 
-      // Redirecionar para a página inicial após cadastro bem-sucedido
-      router.push("/")
-    } catch (error) {
+      setIsAuthenticated(true)
+      router.push("/filmes")
+    } catch (error: any) {
       console.error("Erro ao cadastrar:", error)
+      
+      try {
+        // Tenta extrair o erro da resposta da API
+        const errorData = await error.json()
+        if (errorData.detail) {
+          setFormError(errorData.detail)
+          return
+        }
+      } catch {}
+      
       setFormError("Falha no cadastro. Tente novamente mais tarde.")
     } finally {
       setIsLoading(false)
@@ -167,9 +180,9 @@ export default function AuthPage() {
               <CardContent>
                 <form onSubmit={handleLoginSubmit} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="login-email">Email</Label>
+                    <Label htmlFor="email">Email</Label>
                     <Input
-                      id="login-email"
+                      id="email"
                       name="email"
                       type="email"
                       placeholder="seu.email@exemplo.com"
@@ -181,15 +194,10 @@ export default function AuthPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="login-password">Senha</Label>
-                      <Link href="#" className="text-xs text-amber-500 hover:text-amber-400">
-                        Esqueceu a senha?
-                      </Link>
-                    </div>
+                    <Label htmlFor="password">Senha</Label>
                     <div className="relative">
                       <Input
-                        id="login-password"
+                        id="password"
                         name="password"
                         type={showPassword ? "text" : "password"}
                         placeholder="••••••••"
@@ -242,12 +250,12 @@ export default function AuthPage() {
               <CardContent>
                 <form onSubmit={handleRegisterSubmit} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="register-name">Nome</Label>
+                    <Label htmlFor="name">Nome</Label>
                     <Input
-                      id="register-name"
+                      id="name"
                       name="name"
                       type="text"
-                      placeholder="Seu nome completo"
+                      placeholder="Seu nome"
                       value={registerData.name}
                       onChange={handleRegisterChange}
                       className="bg-zinc-800 border-zinc-700 text-white"
@@ -256,9 +264,9 @@ export default function AuthPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="register-email">Email</Label>
+                    <Label htmlFor="email">Email</Label>
                     <Input
-                      id="register-email"
+                      id="email"
                       name="email"
                       type="email"
                       placeholder="seu.email@exemplo.com"
@@ -270,10 +278,10 @@ export default function AuthPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="register-password">Senha</Label>
+                    <Label htmlFor="password">Senha</Label>
                     <div className="relative">
                       <Input
-                        id="register-password"
+                        id="password"
                         name="password"
                         type={showPassword ? "text" : "password"}
                         placeholder="••••••••"
@@ -292,20 +300,6 @@ export default function AuthPage() {
                       </button>
                     </div>
                     <p className="text-xs text-zinc-500">A senha deve ter pelo menos 6 caracteres</p>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="register-confirm-password">Confirmar senha</Label>
-                    <Input
-                      id="register-confirm-password"
-                      name="confirmPassword"
-                      type={showPassword ? "text" : "password"}
-                      placeholder="••••••••"
-                      value={registerData.confirmPassword}
-                      onChange={handleRegisterChange}
-                      className="bg-zinc-800 border-zinc-700 text-white"
-                      required
-                    />
                   </div>
 
                   {formError && <div className="bg-red-500/20 text-red-400 p-3 rounded-md text-sm">{formError}</div>}
