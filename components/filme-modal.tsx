@@ -10,6 +10,8 @@ import { Badge } from "@/components/ui/badge"
 import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
 import { VisuallyHidden } from "@/components/ui/visually-hidden"
+import { movieService } from "@/app/services/movieService";
+import { authService } from "@/app/services/authService";
 
 export interface Producao {
   nome: string
@@ -91,11 +93,26 @@ export default function FilmeModal({ filme, aberto, onClose, isFavorited = false
   const [editandoAnotacao, setEditandoAnotacao] = useState(false)
   const [initialLoad, setInitialLoad] = useState(true)
 
-  const handleFavoritar = () => {
-    if (!initialLoad) {
-      setFavorito(!favorito)
+  const handleFavoritar = async () => {
+    if (!filme) return;
+    setIsAvaliando(true);
+    try {
+      const user = await authService.getUserFromToken();
+      if (!user) {throw new Error("Usuário não autenticado")};
+      if (favorito) {
+        await movieService.removeFavorite(user.id || user.nameid, filme.id);
+        setFavorito(false);
+      } else {
+        await movieService.addFavorite(user.id || user.nameid, filme.id);
+        setFavorito(true);
+      }
+      setErro(null);
+    } catch (err: any) {
+      setErro(err.message || "Erro ao favoritar/desfavoritar filme");
+    } finally {
+      setIsAvaliando(false);
     }
-  }
+  };
 
   // Atualizar estado inicial
   useEffect(() => {
@@ -183,6 +200,21 @@ export default function FilmeModal({ filme, aberto, onClose, isFavorited = false
               />
             </div>
             <div className="absolute inset-0 bg-gradient-to-t from-zinc-900 via-zinc-900/60 to-transparent" />
+
+            {/* Ícone de coração pequeno sobreposto no banner */}
+            <button
+              onClick={handleFavoritar}
+              className="absolute top-4 right-4 z-20 p-2 rounded-full bg-black/50 hover:bg-black/70 transition-colors"
+              aria-label={favorito ? "Remover dos favoritos" : "Adicionar aos favoritos"}
+              style={{ lineHeight: 0 }}
+            >
+              <Heart
+                className={cn(
+                  "h-6 w-6 transition-all",
+                  favorito ? "fill-red-500 text-red-500" : "text-white"
+                )}
+              />
+            </button>
 
             {/* Botão de fechar */}
             <button
@@ -446,4 +478,3 @@ export default function FilmeModal({ filme, aberto, onClose, isFavorited = false
     </Dialog>
   )
 }
-

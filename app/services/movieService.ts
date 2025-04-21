@@ -32,6 +32,52 @@ export interface Movie {
 }
 
 export const movieService = {
+  async addFavorite(userId: string, movieId: string): Promise<void> {
+    const token = document.cookie
+      .split('; ')
+      .find(row => row.startsWith('auth_token='))
+      ?.split('=')[1]
+
+    const response = await fetch(`${API_BASE_URL}/favorite`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token ?? ''}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        userId: userId,
+        movieId: movieId
+      }),
+    })
+
+    if (!response.ok) {
+      throw new Error('Falha ao adicionar aos favoritos')
+    }
+  },
+
+  async removeFavorite(userId: string, movieId: string): Promise<void> {
+    const token = document.cookie
+      .split('; ')
+      .find(row => row.startsWith('auth_token='))
+      ?.split('=')[1]
+
+    const response = await fetch(`${API_BASE_URL}/favorite`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token ?? ''}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        userId: userId,
+        movieId: movieId
+      }),
+    })
+
+    if (!response.ok) {
+      throw new Error('Falha ao remover dos favoritos')
+    }
+  },
+
   async getHomeMovies(): Promise<MovieResponse> {
     try {
       const response = await fetch(`${API_BASE_URL}/movies/home`)
