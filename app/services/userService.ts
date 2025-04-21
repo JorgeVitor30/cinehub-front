@@ -9,6 +9,11 @@ export interface CreateUserRequest {
   password: string
 }
 
+export interface UpdateUserRequest {
+  lastPassword: string
+  newPassword: string
+}
+
 
 export interface User {
   id: string
@@ -85,6 +90,30 @@ export const userService = {
 
     if (!response.ok) {
       throw new Error("Failed to upload photo");
+    }
+  },
+
+  async changePasswordById(id: string, data: UpdateUserRequest) {
+    const token = authService.getToken()
+    try {
+      const response = await fetch(`${API_URL}/users/${id}/password`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
+        body: JSON.stringify(data),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.detail || 'Failed to change password')
+      }
+
+      return true
+    } catch (error) {
+      console.error('Error changing password:', error)
+      throw error
     }
   }
 }

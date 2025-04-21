@@ -15,34 +15,30 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { userService } from "@/app/services/userService" 
+import { authService } from '../app/services/authService';
 
 interface AlterarSenhaModalProps {
   aberto: boolean
   onClose: () => void
 }
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5129/api'
+
 
 export default function AlterarSenhaModal({ aberto, onClose }: AlterarSenhaModalProps) {
   const [senhaAtual, setSenhaAtual] = useState("")
   const [novaSenha, setNovaSenha] = useState("")
-  const [confirmarSenha, setConfirmarSenha] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
   const [sucesso, setSucesso] = useState(false)
   const [mostrarSenhaAtual, setMostrarSenhaAtual] = useState(false)
   const [mostrarNovaSenha, setMostrarNovaSenha] = useState(false)
-  const [mostrarConfirmarSenha, setMostrarConfirmarSenha] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    // Validações
-    if (!senhaAtual || !novaSenha || !confirmarSenha) {
+    if (!senhaAtual || !novaSenha) {
       setErro("Preencha todos os campos")
-      return
-    }
-
-    if (novaSenha !== confirmarSenha) {
-      setErro("As senhas não coincidem")
       return
     }
 
@@ -56,30 +52,22 @@ export default function AlterarSenhaModal({ aberto, onClose }: AlterarSenhaModal
     setSucesso(false)
 
     try {
-      // Simulação de chamada de API
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-
-      // Aqui você faria a chamada real para alterar a senha
-      console.log("Senha alterada com sucesso")
-
-      setSucesso(true)
-
-      // Limpar campos
-      setSenhaAtual("")
-      setNovaSenha("")
-      setConfirmarSenha("")
-
-      // Fechar o modal após 1.5 segundos
-      setTimeout(() => {
-        onClose()
-      }, 1500)
-    } catch (error) {
-      setErro("Erro ao alterar senha. Verifique se a senha atual está correta.")
-    } finally {
+      const decodedUser = await authService.getUserFromToken()
+      console.log("Decoded user:", decodedUser)
+      await userService.changePasswordById(decodedUser.nameid, {lastPassword: senhaAtual, newPassword: novaSenha})
+      authService.logout()
+      // Redireciona para login após logout
+      window.location.href = '/login'
+    }
+    catch (error: any) {
+      console.error("Erro ao alterar senha:", error)
+      setErro(error.message || "Erro ao alterar senha")
+    }
+    finally {
       setIsLoading(false)
     }
   }
-
+  
   return (
     <Dialog open={aberto} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="bg-zinc-900 border-zinc-800 text-white sm:max-w-md">
@@ -143,33 +131,6 @@ export default function AlterarSenhaModal({ aberto, onClose }: AlterarSenhaModal
                 </Button>
               </div>
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="confirmar-senha" className="text-white">
-                Confirmar nova senha
-              </Label>
-              <div className="relative">
-                <Key className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
-                <Input
-                  id="confirmar-senha"
-                  type={mostrarConfirmarSenha ? "text" : "password"}
-                  value={confirmarSenha}
-                  onChange={(e) => setConfirmarSenha(e.target.value)}
-                  className="pl-10 pr-10 bg-zinc-800 border-zinc-700 text-white focus-visible:ring-amber-500"
-                  placeholder="Confirme sua nova senha"
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 p-0 text-zinc-400"
-                  onClick={() => setMostrarConfirmarSenha(!mostrarConfirmarSenha)}
-                >
-                  {mostrarConfirmarSenha ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  <span className="sr-only">{mostrarConfirmarSenha ? "Esconder senha" : "Mostrar senha"}</span>
-                </Button>
-              </div>
-            </div>
           </div>
 
           {erro && (
@@ -216,4 +177,3 @@ export default function AlterarSenhaModal({ aberto, onClose }: AlterarSenhaModal
     </Dialog>
   )
 }
-
