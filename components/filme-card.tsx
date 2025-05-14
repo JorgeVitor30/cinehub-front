@@ -107,7 +107,7 @@ export default function FilmeCard({
         </div>
       </div>
 
-      {/* Botão de favoritar com estado de loading */}
+
       {/* <button
         onClick={handleFavoritar}
         disabled={isLoading}
