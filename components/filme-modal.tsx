@@ -13,6 +13,7 @@ import { VisuallyHidden } from "@/components/ui/visually-hidden"
 import { movieService } from "@/app/services/movieService";
 import { authService } from "@/app/services/authService";
 import { userService } from "@/app/services/userService";
+import { rateService } from "@/app/services/rateService"
 
 export interface Producao {
   nome: string
@@ -47,22 +48,24 @@ interface FilmeModalProps {
 }
 
 const avaliarAPI = async (filmeId: string, nota: number, comentario?: string): Promise<{ success: boolean }> => {
-  const response = await fetch(`http://localhost:5129/api/movies/${filmeId}/rate`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ 
-      rating: nota,
+  try {
+    const user = await authService.getUserFromToken()
+    if (!user?.nameid) {
+      throw new Error('Usuário não autenticado')
+    }
+
+    await rateService.createRate({
+      movieId: filmeId,
+      userId: user.nameid,
+      rateValue: nota,
       comment: comentario || ""
-    }),
-  })
+    })
 
-  if (!response.ok) {
-    throw new Error('Falha ao avaliar filme')
+    return { success: true }
+  } catch (error) {
+    console.error('Erro ao avaliar filme:', error)
+    throw error
   }
-
-  return { success: true }
 }
 
 // Palavras-chave mockadas para filmes que não têm
@@ -171,7 +174,20 @@ export default function FilmeModal({ filme, aberto, onClose, isFavorited = false
     setSucessoAvaliacao(false)
 
     try {
-      await avaliarAPI(filme.id, avaliacaoTemporaria, anotacao)
+      const user = await authService.getUserFromToken()
+      if (!user?.nameid) {
+        setErro("Você precisa estar logado para avaliar um filme.")
+        return
+      }
+
+      await rateService.createRate({
+        movieId: filme.id,
+        userId: user.nameid,
+        rateValue: avaliacaoTemporaria,
+        comment: anotacao || ""
+      })
+
+      // Se chegou aqui, a avaliação foi bem sucedida
       setAvaliacaoUsuario(avaliacaoTemporaria)
       setSucessoAvaliacao(true)
 
@@ -184,7 +200,12 @@ export default function FilmeModal({ filme, aberto, onClose, isFavorited = false
         setSucessoAvaliacao(false)
       }, 3000)
     } catch (err) {
-      setErro("Não foi possível registrar sua avaliação. Tente novamente.")
+      console.error('Erro ao avaliar:', err)
+      if (err instanceof Error) {
+        setErro(err.message)
+      } else {
+        setErro("Não foi possível registrar sua avaliação. Tente novamente.")
+      }
     } finally {
       setIsAvaliando(false)
     }
