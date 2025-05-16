@@ -32,7 +32,11 @@ export interface FilmeDetalhado {
   lingua: string
   orcamento: string
   producoes: Producao[]
-  keywords?: string[] // Nova propriedade para palavras-chave
+  keywords?: string[]
+  userRating?: {
+    rate: number
+    comment: string
+  }
 }
 
 interface FilmeModalProps {
@@ -42,13 +46,16 @@ interface FilmeModalProps {
   isFavorited?: boolean
 }
 
-const avaliarAPI = async (filmeId: string, nota: number): Promise<{ success: boolean }> => {
+const avaliarAPI = async (filmeId: string, nota: number, comentario?: string): Promise<{ success: boolean }> => {
   const response = await fetch(`http://localhost:5129/api/movies/${filmeId}/rate`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ rating: nota }),
+    body: JSON.stringify({ 
+      rating: nota,
+      comment: comentario || ""
+    }),
   })
 
   if (!response.ok) {
@@ -123,17 +130,27 @@ export default function FilmeModal({ filme, aberto, onClose, isFavorited = false
     }
   };
 
-  // Atualizar estado inicial
+  // Atualizar estado inicial com a avaliação do usuário se existir
   useEffect(() => {
     if (filme) {
       setFavorito(isFavorited)
       setInitialLoad(false)
-      // Aqui você poderia buscar a avaliação do usuário de uma API
-      // Por enquanto, vamos simular aleatoriamente se o usuário já avaliou ou não
-      const jaAvaliou = Math.random() > 0.7
-      const avaliacaoAleatoria = jaAvaliou ? Math.floor(Math.random() * 10) + 1 : null
-      setAvaliacaoUsuario(avaliacaoAleatoria)
-      setAvaliacaoTemporaria(avaliacaoAleatoria || 5)
+      
+      if (filme.userRating) {
+        setAvaliacaoUsuario(filme.userRating.rate)
+        setAvaliacaoTemporaria(filme.userRating.rate)
+        // Atualizar o comentário se existir na avaliação do usuário
+        if (filme.userRating.comment) {
+          setAnotacao(filme.userRating.comment)
+          setAnotacaoSalva(filme.userRating.comment)
+          setEditandoAnotacao(false)
+        }
+      } else {
+        setAvaliacaoUsuario(null)
+        setAvaliacaoTemporaria(5)
+        setAnotacao("")
+        setAnotacaoSalva("")
+      }
 
       // Resetar estados de erro e sucesso
       setErro(null)
@@ -154,9 +171,14 @@ export default function FilmeModal({ filme, aberto, onClose, isFavorited = false
     setSucessoAvaliacao(false)
 
     try {
-      await avaliarAPI(filme.id, avaliacaoTemporaria)
+      await avaliarAPI(filme.id, avaliacaoTemporaria, anotacao)
       setAvaliacaoUsuario(avaliacaoTemporaria)
       setSucessoAvaliacao(true)
+
+      // Salvar o comentário junto com a avaliação
+      if (anotacao) {
+        setAnotacaoSalva(anotacao)
+      }
 
       setTimeout(() => {
         setSucessoAvaliacao(false)
@@ -173,19 +195,10 @@ export default function FilmeModal({ filme, aberto, onClose, isFavorited = false
     setEditandoAnotacao(false)
 
     // Aqui você poderia salvar a anotação em um banco de dados ou localStorage
-    localStorage.setItem(`anotacao-filme-${filme.id}`, anotacao)
-  }
-
-  // Carregar anotação salva quando o filme mudar
-  useEffect(() => {
     if (filme) {
-      // Carregar do localStorage ou de uma API
-      const anotacaoSalva = localStorage.getItem(`anotacao-filme-${filme.id}`) || ""
-      setAnotacao(anotacaoSalva)
-      setAnotacaoSalva(anotacaoSalva)
-      setEditandoAnotacao(false)
+      localStorage.setItem(`anotacao-filme-${filme.id}`, anotacao)
     }
-  }, [filme])
+  }
 
   return (
     <Dialog open={aberto} onOpenChange={(open) => !open && onClose()}>
@@ -443,6 +456,8 @@ export default function FilmeModal({ filme, aberto, onClose, isFavorited = false
                       </div>
                     </div>
                   )}
+                  
+                  {/* Avaliação */}
                 <div className="flex items-center gap-2 mt-4">
                 <Star className="w-5 h-5 text-yellow-400" />
                 <span className="text-base font-semibold text-white">
