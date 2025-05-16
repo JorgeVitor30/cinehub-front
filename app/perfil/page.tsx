@@ -41,6 +41,8 @@ import { useState, useEffect } from "react"
 import { userService } from "@/app/services/userService"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
+import { type Movie } from "@/app/services/movieService"
+import { type User } from "@/app/services/userService"
 
 // Dados mockados do usuário
 const usuarioMock = {
@@ -71,96 +73,6 @@ const usuarioMock = {
     },
   },
 }
-
-import { type Movie } from "@/app/services/userService"
-
-export interface User {
-  id: string
-  name: string
-  email: string
-  photo?: string
-  role: string
-  visibilityPublic: boolean
-  createdAt: string
-  favorites: Movie[]
-}
-
-  
-// Filmes avaliados mockados
-const filmesAvaliadosMock = [
-  {
-    id: "1",
-    titulo: "Inception",
-    capa: "https://image.tmdb.org/t/p/w500//oYuLEt3zVCKq57qu2F8dT7NIa6f.jpg",
-    avaliacaoUsuario: 9,
-    avaliacao: 8.8,
-    ano: 2010,
-  },
-  {
-    id: "13",
-    titulo: "O Senhor dos Anéis: O Retorno do Rei",
-    capa: "https://image.tmdb.org/t/p/w500/pbrkL804c8yAv3zBZR4QPEafpAR.jpg",
-    avaliacaoUsuario: 10,
-    avaliacao: 9.0,
-    ano: 2003,
-  },
-  {
-    id: "17",
-    titulo: "Tudo em Todo Lugar ao Mesmo Tempo",
-    capa: "https://image.tmdb.org/t/p/w500/pbrkL804c8yAv3zBZR4QPEafpAR.jpg",
-    avaliacaoUsuario: 8,
-    avaliacao: 8.7,
-    ano: 2022,
-  },
-  {
-    id: "19",
-    titulo: "Parasita",
-    capa: "https://image.tmdb.org/t/p/w500/pbrkL804c8yAv3zBZR4QPEafpAR.jpg",
-    avaliacaoUsuario: 9,
-    avaliacao: 8.9,
-    ano: 2019,
-  },
-  {
-    id: "3",
-    titulo: "Pobres Criaturas",
-    capa: "https://image.tmdb.org/t/p/w500//oYuLEt3zVCKq57qu2F8dT7NIa6f.jpg",
-    avaliacaoUsuario: 7,
-    avaliacao: 8.5,
-    ano: 2023,
-  },
-  {
-    id: "11",
-    titulo: "O Poderoso Chefão",
-    capa: "https://image.tmdb.org/t/p/w500/pbrkL804c8yAv3zBZR4QPEafpAR.jpg",
-    avaliacaoUsuario: 10,
-    avaliacao: 9.2,
-    ano: 1972,
-  },
-  {
-    id: "12",
-    titulo: "Pulp Fiction",
-    capa: "https://image.tmdb.org/t/p/w500/pbrkL804c8yAv3zBZR4QPEafpAR.jpg",
-    avaliacaoUsuario: 9,
-    avaliacao: 8.9,
-    ano: 1994,
-  },
-  {
-    id: "6",
-    titulo: "Godzilla e Kong: O Novo Império",
-    capa: "https://image.tmdb.org/t/p/w500/pbrkL804c8yAv3zBZR4QPEafpAR.jpg",
-    avaliacaoUsuario: 7,
-    avaliacao: 7.2,
-    ano: 2024,
-  },
-  {
-    id: "7",
-    titulo: "Kung Fu Panda 4",
-    capa: "https://image.tmdb.org/t/p/w500/pbrkL804c8yAv3zBZR4QPEafpAR.jpg",
-    avaliacaoUsuario: 8,
-    avaliacao: 7.0,
-    ano: 2024,
-  },
-]
 
 // Filmes recomendados mockados
 const filmesRecomendadosMock = [
@@ -325,7 +237,6 @@ export default function PerfilPage() {
 
   // Verificar se deve mostrar scroll
   const mostrarScrollFavoritos = (userData?.favorites?.length ?? 0) > 7
-  const mostrarScrollAvaliados = filmesAvaliadosMock.length > 7
   const mostrarScrollRecomendados = filmesRecomendadosMock.length > 7
 
   return (
@@ -585,52 +496,55 @@ export default function PerfilPage() {
                         <CardDescription className="text-zinc-400">Filmes que você avaliou</CardDescription>
                       </div>
                       <Badge className="bg-amber-500 text-black hover:bg-amber-600">
-                        {filmesAvaliadosMock.length} filmes
+                        {userData?.ratedList?.length || 0} filmes
                       </Badge>
                     </div>
                   </CardHeader>
                   <CardContent>
-                    {filmesAvaliadosMock.length > 0 ? (
+                    {userData?.ratedList && userData.ratedList.length > 0 ? (
                       <div
                         className={`space-y-4 ${
-                          mostrarScrollAvaliados ? "max-h-[600px] overflow-y-auto pr-2 custom-scrollbar" : ""
+                          userData.ratedList.length > 7 ? "max-h-[600px] overflow-y-auto pr-2 custom-scrollbar" : ""
                         }`}
                       >
-                        {filmesAvaliadosMock.map((filme) => (
+                        {userData.ratedList.map((rated) => (
                           <div
-                            key={filme.id}
+                            key={rated.movie.id}
                             className="flex items-center gap-4 p-3 rounded-lg bg-zinc-800 hover:bg-zinc-700 transition-colors cursor-pointer"
-                            onClick={() => setFilmeAberto(encontrarFilmeDetalhado(filme.id))}
+                            onClick={() => setFilmeAberto(mapMovieToFilmeDetalhado(rated.movie))}
                           >
                             <div className="relative w-16 h-24 flex-shrink-0 overflow-hidden rounded">
                               <Image
-                                src={filme.capa || "/placeholder.svg"}
-                                alt={filme.titulo}
+                                src={rated.movie.posterPhotoUrl || "/placeholder.svg"}
+                                alt={rated.movie.title}
                                 fill
                                 className="object-cover"
                               />
                             </div>
                             <div className="flex-1 min-w-0">
-                              <h3 className="font-semibold text-white truncate">{filme.titulo}</h3>
+                              <h3 className="font-semibold text-white truncate">{rated.movie.title}</h3>
                               <div className="flex items-center gap-2 text-sm text-zinc-400">
-                                <span>{filme.ano}</span>
+                                <span>{new Date(rated.movie.releaseDate).getFullYear()}</span>
                               </div>
                               <div className="flex items-center gap-4 mt-1">
                                 <div className="flex items-center">
                                   <Star className="h-4 w-4 text-amber-500 fill-amber-500 mr-1" />
-                                  <span className="text-sm font-medium">{filme.avaliacao.toFixed(1)}</span>
+                                  <span className="text-sm font-medium">{rated.movie.voteAverage.toFixed(1)}</span>
                                   <span className="text-xs text-zinc-500 ml-1">global</span>
                                 </div>
                                 <div className="flex items-center">
                                   <Star className="h-4 w-4 text-green-500 fill-green-500 mr-1" />
-                                  <span className="text-sm font-medium">{filme.avaliacaoUsuario}</span>
+                                  <span className="text-sm font-medium">{rated.rate}</span>
                                   <span className="text-xs text-zinc-500 ml-1">sua</span>
                                 </div>
                               </div>
+                              {rated.comment && (
+                                <p className="text-sm text-zinc-400 mt-1 line-clamp-1">{rated.comment}</p>
+                              )}
                             </div>
                             <div className="flex-shrink-0 flex gap-2">
                               <div className="bg-zinc-700 rounded-full px-3 py-1 text-sm font-bold text-amber-500">
-                                {filme.avaliacaoUsuario}/10
+                                {rated.rate}/10
                               </div>
                             </div>
                           </div>

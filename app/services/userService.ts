@@ -24,6 +24,11 @@ export interface User {
   visibilityPublic: boolean
   createdAt: string
   favorites: Movie[]
+  ratedList?: {
+    movie: Movie
+    rate: number
+    comment: string
+  }[]
 }
 
 export const userService = {
