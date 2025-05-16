@@ -443,6 +443,14 @@ export default function FilmeModal({ filme, aberto, onClose, isFavorited = false
                       </div>
                     </div>
                   )}
+                <div className="flex items-center gap-2 mt-4">
+                <Star className="w-5 h-5 text-yellow-400" />
+                <span className="text-base font-semibold text-white">
+                  <span className="text-yellow-400">{filme.avaliacao.toFixed(1)}</span>
+                  <span className="text-zinc-400"> / 10</span>
+                </span>
+              </div>
+
 
                   {/* Produtoras */}
                   {filme.producoes && filme.producoes.length > 0 && (
