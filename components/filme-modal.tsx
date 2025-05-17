@@ -201,13 +201,39 @@ export default function FilmeModal({ filme, aberto, onClose, isFavorited = false
     }
   }
 
-  const salvarAnotacao = () => {
-    setAnotacaoSalva(anotacao)
-    setEditandoAnotacao(false)
+  const salvarAnotacao = async () => {
+    try {
+      if (!filme.userRating?.id) {
+        setErro("Não é possível salvar anotação sem uma avaliação")
+        return
+      }
 
-    // Aqui você poderia salvar a anotação em um banco de dados ou localStorage
-    if (filme) {
-      localStorage.setItem(`anotacao-filme-${filme.id}`, anotacao)
+      setIsAvaliando(true)
+      setErro(null)
+
+      // Atualiza apenas o comentário, mantendo a mesma nota
+      await rateService.updateRate(
+        filme.userRating.id,
+        filme.userRating.rate,
+        anotacao
+      )
+
+      setAnotacaoSalva(anotacao)
+      setEditandoAnotacao(false)
+      setSucessoAvaliacao(true)
+
+      setTimeout(() => {
+        setSucessoAvaliacao(false)
+      }, 3000)
+    } catch (err) {
+      console.error('Erro ao salvar anotação:', err)
+      if (err instanceof Error) {
+        setErro(err.message)
+      } else {
+        setErro("Não foi possível salvar sua anotação. Tente novamente.")
+      }
+    } finally {
+      setIsAvaliando(false)
     }
   }
 
@@ -306,7 +332,7 @@ export default function FilmeModal({ filme, aberto, onClose, isFavorited = false
                         <Pencil className="h-5 w-5 mr-2 text-amber-500" />
                         Minhas anotações
                       </h3>
-                      {!editandoAnotacao && (
+                      {!editandoAnotacao && filme.userRating && (
                         <Button
                           variant="ghost"
                           size="sm"
@@ -326,34 +352,57 @@ export default function FilmeModal({ filme, aberto, onClose, isFavorited = false
                           onChange={(e) => setAnotacao(e.target.value)}
                           className="bg-zinc-700 border-zinc-600 focus-visible:ring-amber-500"
                         />
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              setAnotacao(anotacaoSalva)
-                              setEditandoAnotacao(false)
-                            }}
-                            className="border-zinc-600 text-zinc-300 hover:bg-zinc-700"
-                          >
-                            Cancelar
-                          </Button>
-                          <Button 
-                            size="sm" 
-                            onClick={salvarAnotacao}
-                            className="bg-amber-500 hover:bg-amber-600 text-black"
-                          >
-                            <Save className="h-4 w-4 mr-1" />
-                            Salvar
-                          </Button>
+                        <div className="flex justify-between items-center">
+                          {erro && <p className="text-red-500 text-sm">{erro}</p>}
+                          {sucessoAvaliacao && (
+                            <p className="text-green-500 text-sm flex items-center">
+                              <Check className="h-3 w-3 mr-1" />
+                              Anotação salva com sucesso!
+                            </p>
+                          )}
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setAnotacao(anotacaoSalva)
+                                setEditandoAnotacao(false)
+                                setErro(null)
+                              }}
+                              className="border-zinc-600 text-zinc-300 hover:bg-zinc-700"
+                              disabled={isAvaliando}
+                            >
+                              Cancelar
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              onClick={salvarAnotacao}
+                              className="bg-amber-500 hover:bg-amber-600 text-black"
+                              disabled={isAvaliando}
+                            >
+                              {isAvaliando ? (
+                                <>
+                                  <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                                  Salvando...
+                                </>
+                              ) : (
+                                <>
+                                  <Save className="h-4 w-4 mr-1" />
+                                  Salvar
+                                </>
+                              )}
+                            </Button>
+                          </div>
                         </div>
                       </div>
                     ) : (
                       <div>
                         {anotacaoSalva ? (
                           <p className="text-zinc-300 whitespace-pre-line">{anotacaoSalva}</p>
-                        ) : (
+                        ) : filme.userRating ? (
                           <p className="text-zinc-500 italic">Nenhuma anotação para este filme.</p>
+                        ) : (
+                          <p className="text-zinc-500 italic">Avalie o filme para adicionar anotações.</p>
                         )}
                       </div>
                     )}
