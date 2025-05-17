@@ -46,6 +46,7 @@ interface FilmeModalProps {
   aberto: boolean
   onClose: () => void
   isFavorited?: boolean
+  onRatingUpdate?: (movieId: string, newRating: number, newComment: string) => void
 }
 
 // Palavras-chave mockadas para filmes que não têm
@@ -72,7 +73,7 @@ const keywordsMock: Record<string, string[]> = {
   "20": ["Gotham", "Doença mental", "Comédia", "Violência", "Sociedade"],
 }
 
-export default function FilmeModal({ filme, aberto, onClose, isFavorited = false }: FilmeModalProps) {
+export default function FilmeModal({ filme, aberto, onClose, isFavorited = false, onRatingUpdate }: FilmeModalProps) {
   const [avaliacaoUsuario, setAvaliacaoUsuario] = useState<number | null>(null)
   const [avaliacaoTemporaria, setAvaliacaoTemporaria] = useState<number>(0)
   const [isAvaliando, setIsAvaliando] = useState(false)
@@ -186,6 +187,9 @@ export default function FilmeModal({ filme, aberto, onClose, isFavorited = false
         setAnotacaoSalva(anotacao)
       }
 
+      // Chamar o callback de atualização se existir
+      onRatingUpdate?.(filme.id, avaliacaoTemporaria, anotacao || "")
+
       setTimeout(() => {
         setSucessoAvaliacao(false)
       }, 3000)
@@ -221,6 +225,9 @@ export default function FilmeModal({ filme, aberto, onClose, isFavorited = false
       setAnotacaoSalva(anotacao)
       setEditandoAnotacao(false)
       setSucessoAvaliacao(true)
+
+      // Chamar o callback de atualização se existir
+      onRatingUpdate?.(filme.id, filme.userRating.rate, anotacao)
 
       setTimeout(() => {
         setSucessoAvaliacao(false)

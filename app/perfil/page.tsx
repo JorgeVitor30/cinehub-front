@@ -178,9 +178,49 @@ export default function PerfilPage() {
   const [abaAtual, setAbaAtual] = useState("favoritos")
   const [fotoModalAberto, setFotoModalAberto] = useState(false)
   const [userData, setUserData] = useState<User | null>(null)
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
 
+  // Função para atualizar a avaliação na lista
+  const handleRatingUpdate = async (movieId: string, newRating: number, newComment: string) => {
+    if (!userData) return
+
+    // Atualizar o estado local do userData com a nova avaliação
+    setUserData(prevData => {
+      if (!prevData?.ratedList) return prevData
+
+      const updatedRatedList = prevData.ratedList.map(rated => {
+        if (rated.movie.id === movieId) {
+          return {
+            ...rated,
+            rate: newRating,
+            comment: newComment
+          }
+        }
+        return rated
+      })
+
+      return {
+        ...prevData,
+        ratedList: updatedRatedList
+      }
+    })
+
+    // Atualizar o filme aberto no modal se necessário
+    setFilmeAberto(prev => {
+      if (prev && prev.id === movieId) {
+        return {
+          ...prev,
+          userRating: {
+            ...prev.userRating!,
+            rate: newRating,
+            comment: newComment
+          }
+        }
+      }
+      return prev
+    })
+  }
 
   // Função para encontrar o filme detalhado pelo ID
   const encontrarFilmeDetalhado = (id: string) => {
@@ -720,7 +760,15 @@ export default function PerfilPage() {
       </main>
 
       {/* Modais */}
-      {filmeAberto && <FilmeModal filme={filmeAberto} aberto={!!filmeAberto} onClose={() => setFilmeAberto(null)} isFavorited={abaAtual === "favoritos"} />}
+      {filmeAberto && (
+        <FilmeModal
+          filme={filmeAberto}
+          aberto={!!filmeAberto}
+          onClose={() => setFilmeAberto(null)}
+          isFavorited={abaAtual === "favoritos"}
+          onRatingUpdate={handleRatingUpdate}
+        />
+      )}
       <EditarPerfilModal
         aberto={editarPerfilAberto}
         onClose={() => setEditarPerfilAberto(false)}
