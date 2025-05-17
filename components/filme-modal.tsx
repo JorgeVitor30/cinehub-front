@@ -35,6 +35,7 @@ export interface FilmeDetalhado {
   producoes: Producao[]
   keywords?: string[]
   userRating?: {
+    id: string
     rate: number
     comment: string
   }
@@ -45,27 +46,6 @@ interface FilmeModalProps {
   aberto: boolean
   onClose: () => void
   isFavorited?: boolean
-}
-
-const avaliarAPI = async (filmeId: string, nota: number, comentario?: string): Promise<{ success: boolean }> => {
-  try {
-    const user = await authService.getUserFromToken()
-    if (!user?.nameid) {
-      throw new Error('Usuário não autenticado')
-    }
-
-    await rateService.createRate({
-      movieId: filmeId,
-      userId: user.nameid,
-      rateValue: nota,
-      comment: comentario || ""
-    })
-
-    return { success: true }
-  } catch (error) {
-    console.error('Erro ao avaliar filme:', error)
-    throw error
-  }
 }
 
 // Palavras-chave mockadas para filmes que não têm
@@ -180,12 +160,22 @@ export default function FilmeModal({ filme, aberto, onClose, isFavorited = false
         return
       }
 
-      await rateService.createRate({
-        movieId: filme.id,
-        userId: user.nameid,
-        rateValue: avaliacaoTemporaria,
-        comment: anotacao || ""
-      })
+      // Se já existe uma avaliação (userRating), usa updateRate
+      if (filme.userRating?.id) {
+        await rateService.updateRate(
+          filme.userRating.id,
+          avaliacaoTemporaria,
+          anotacao || ""
+        )
+      } else {
+        // Se não existe avaliação, cria uma nova
+        await rateService.createRate({
+          movieId: filme.id,
+          userId: user.nameid,
+          rateValue: avaliacaoTemporaria,
+          comment: anotacao || ""
+        })
+      }
 
       // Se chegou aqui, a avaliação foi bem sucedida
       setAvaliacaoUsuario(avaliacaoTemporaria)

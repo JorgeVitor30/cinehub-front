@@ -149,7 +149,7 @@ const filmesRecomendadosMock = [
 ]
 
 // Função para mapear os filmes da API para o formato esperado pelo componente
-const mapMovieToFilmeDetalhado = (movie: Movie, userRating?: { rate: number, comment: string }): FilmeDetalhado => {
+const mapMovieToFilmeDetalhado = (movie: Movie, userRating?: { id?: string, rate: number, comment: string }): FilmeDetalhado => {
   return {
     id: movie.id,
     titulo: movie.title,
@@ -160,10 +160,14 @@ const mapMovieToFilmeDetalhado = (movie: Movie, userRating?: { rate: number, com
     ano: new Date(movie.releaseDate).getFullYear(),
     generos: movie.genres.split(',').map(g => g.trim()),
     lingua: movie.originalLanguage,
-    orcamento: `$${(movie.budget / 1000000).toFixed(0)} milhões`,
+    orcamento: `$${(Number(movie.budget) / 1000000).toFixed(0)} milhões`,
     descricao: movie.overview,
     producoes: movie.productions.split(',').map(p => ({ nome: p.trim() })),
-    userRating: userRating
+    userRating: userRating && userRating.id ? {
+      id: userRating.id, // Usar o ID da avaliação (ratedList.id)
+      rate: userRating.rate,
+      comment: userRating.comment
+    } : undefined
   }
 }
 
@@ -512,7 +516,11 @@ export default function PerfilPage() {
                           <div
                             key={rated.movie.id}
                             className="flex items-center gap-4 p-3 rounded-lg bg-zinc-800 hover:bg-zinc-700 transition-colors cursor-pointer"
-                            onClick={() => setFilmeAberto(mapMovieToFilmeDetalhado(rated.movie, { rate: rated.rate, comment: rated.comment }))}
+                            onClick={() => setFilmeAberto(mapMovieToFilmeDetalhado(rated.movie, { 
+                              id: rated.id,
+                              rate: rated.rate, 
+                              comment: rated.comment 
+                            }))}
                           >
                             <div className="relative w-16 h-24 flex-shrink-0 overflow-hidden rounded">
                               <Image

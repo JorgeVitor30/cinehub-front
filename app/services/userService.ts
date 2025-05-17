@@ -25,6 +25,7 @@ export interface User {
   createdAt: string
   favorites: Movie[]
   ratedList?: {
+    id: string
     movie: Movie
     rate: number
     comment: string

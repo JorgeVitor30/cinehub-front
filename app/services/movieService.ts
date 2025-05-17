@@ -83,7 +83,7 @@ export const movieService = {
       const response = await fetch(`${API_BASE_URL}/movies/home`)
       
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
+        throw new Error(`User not Authenticated! status: ${response.status}`)
       }
 
       const data = await response.json()
@@ -133,7 +133,7 @@ export const movieService = {
       })
       
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
+        throw new Error(`User not Authenticated! status: ${response.status}`)
       }
 
       const data = await response.json()
