@@ -339,14 +339,14 @@ export default function FilmeModal({ filme, aberto, onClose, isFavorited = false
                         <Pencil className="h-5 w-5 mr-2 text-amber-500" />
                         Minhas anotações
                       </h3>
-                      {!editandoAnotacao && filme.userRating && (
+                      {!editandoAnotacao && (
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => setEditandoAnotacao(true)}
                           className="text-zinc-400 hover:text-white"
                         >
-                          {anotacaoSalva ? "Editar" : "Adicionar"}
+                          {anotacao ? "Editar" : "Adicionar"}
                         </Button>
                       )}
                     </div>
@@ -359,57 +359,35 @@ export default function FilmeModal({ filme, aberto, onClose, isFavorited = false
                           onChange={(e) => setAnotacao(e.target.value)}
                           className="bg-zinc-700 border-zinc-600 focus-visible:ring-amber-500"
                         />
-                        <div className="flex justify-between items-center">
-                          {erro && <p className="text-red-500 text-sm">{erro}</p>}
-                          {sucessoAvaliacao && (
-                            <p className="text-green-500 text-sm flex items-center">
-                              <Check className="h-3 w-3 mr-1" />
-                              Anotação salva com sucesso!
-                            </p>
-                          )}
-                          <div className="flex gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                setAnotacao(anotacaoSalva)
-                                setEditandoAnotacao(false)
-                                setErro(null)
-                              }}
-                              className="border-zinc-600 text-zinc-300 hover:bg-zinc-700"
-                              disabled={isAvaliando}
-                            >
-                              Cancelar
-                            </Button>
-                            <Button 
-                              size="sm" 
-                              onClick={salvarAnotacao}
-                              className="bg-amber-500 hover:bg-amber-600 text-black"
-                              disabled={isAvaliando}
-                            >
-                              {isAvaliando ? (
-                                <>
-                                  <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-                                  Salvando...
-                                </>
-                              ) : (
-                                <>
-                                  <Save className="h-4 w-4 mr-1" />
-                                  Salvar
-                                </>
-                              )}
-                            </Button>
-                          </div>
+                        <div className="flex justify-end items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setEditandoAnotacao(false)
+                              setErro(null)
+                            }}
+                            className="border-zinc-600 text-zinc-300 hover:bg-zinc-700"
+                          >
+                            Cancelar
+                          </Button>
+                          <Button 
+                            size="sm"
+                            onClick={() => {
+                              setEditandoAnotacao(false)
+                            }}
+                            className="bg-amber-500 hover:bg-amber-600 text-black"
+                          >
+                            Confirmar
+                          </Button>
                         </div>
                       </div>
                     ) : (
                       <div>
-                        {anotacaoSalva ? (
-                          <p className="text-zinc-300 whitespace-pre-line">{anotacaoSalva}</p>
-                        ) : filme.userRating ? (
-                          <p className="text-zinc-500 italic">Nenhuma anotação para este filme.</p>
+                        {anotacao ? (
+                          <p className="text-zinc-300 whitespace-pre-line">{anotacao}</p>
                         ) : (
-                          <p className="text-zinc-500 italic">Avalie o filme para adicionar anotações.</p>
+                          <p className="text-zinc-500 italic">Nenhuma anotação para este filme.</p>
                         )}
                       </div>
                     )}
@@ -444,25 +422,25 @@ export default function FilmeModal({ filme, aberto, onClose, isFavorited = false
                         <span className="text-2xl font-bold text-amber-500">{avaliacaoTemporaria}/10</span>
                       </div>
 
-                <Slider
-                  min={1}
-                  max={10}
-                  step={1}
-                  value={[avaliacaoTemporaria]}
-                  onValueChange={(value) => setAvaliacaoTemporaria(value[0])}
-                  className="w-full"
-                />
+                      <Slider
+                        min={1}
+                        max={10}
+                        step={1}
+                        value={[avaliacaoTemporaria]}
+                        onValueChange={(value) => setAvaliacaoTemporaria(value[0])}
+                        className="w-full"
+                      />
 
-                <div className="flex justify-between items-center">
-                  <div>
-                    {erro && <p className="text-red-500 text-sm">{erro}</p>}
-                    {sucessoAvaliacao && (
-                      <p className="text-green-500 text-sm flex items-center">
-                        <Check className="h-3 w-3 mr-1" />
-                        Avaliação registrada com sucesso!
-                      </p>
-                    )}
-                  </div>
+                      <div className="flex justify-between items-center">
+                        <div>
+                          {erro && <p className="text-red-500 text-sm">{erro}</p>}
+                          {sucessoAvaliacao && (
+                            <p className="text-green-500 text-sm flex items-center">
+                              <Check className="h-3 w-3 mr-1" />
+                              Avaliação registrada com sucesso!
+                            </p>
+                          )}
+                        </div>
 
                         <Button
                           onClick={handleAvaliar}
