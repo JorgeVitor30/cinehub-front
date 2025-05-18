@@ -44,36 +44,6 @@ import { ptBR } from "date-fns/locale"
 import { type Movie } from "@/app/services/movieService"
 import { type User } from "@/app/services/userService"
 
-// Dados mockados do usuário
-const usuarioMock = {
-  id: "1",
-  nome: "TESTE",
-  email: "teste@email.com",
-  avatar: "/placeholder.svg?height=200&width=200",
-  dataCadastro: "Março 2023",
-  totalFilmesAssistidos: 45,
-  totalFilmes: 50000,
-  generoMaisAssistido: "Ficção Científica",
-  filmesAssistidosPorGenero: [
-    { genero: "Ficção Científica", quantidade: 15 },
-    { genero: "Ação", quantidade: 12 },
-    { genero: "Drama", quantidade: 8 },
-    { genero: "Comédia", quantidade: 6 },
-    { genero: "Aventura", quantidade: 4 },
-  ],
-  ranking: {
-    posicao: 42,
-    total: 5782,
-    percentil: 99.3,
-    avaliacoes: 127,
-    nivel: "Cinéfilo Experiente",
-    proximoNivel: {
-      nome: "Crítico Master",
-      avaliacoesNecessarias: 150,
-    },
-  },
-}
-
 // Filmes recomendados mockados
 const filmesRecomendadosMock = [
   {
@@ -344,7 +314,7 @@ export default function PerfilPage() {
                     <div>
                       <p className="text-sm text-zinc-400">Filmes assistidos</p>
                       <p className="font-medium">
-                        {usuarioMock.totalFilmesAssistidos} de {usuarioMock.totalFilmes}
+                        {userData.ratedList?.length || 0} filmes avaliados
                       </p>
                     </div>
                   </div>
@@ -355,7 +325,7 @@ export default function PerfilPage() {
                     </div>
                     <div>
                       <p className="text-sm text-zinc-400">Gênero mais assistido</p>
-                      <p className="font-medium">{usuarioMock.generoMaisAssistido}</p>
+                      <p className="font-medium">Em breve</p>
                     </div>
                   </div>
                 </div>
@@ -370,36 +340,39 @@ export default function PerfilPage() {
               <CardContent>
                 <div className="flex flex-col items-center mb-4">
                   <div className="bg-gradient-to-r from-amber-500 to-red-600 text-white text-2xl font-bold rounded-full w-16 h-16 flex items-center justify-center mb-2">
-                    {usuarioMock.ranking.posicao}
+                    {userData.ranking?.posicao || '-'}
                   </div>
-                  <p className="text-sm text-zinc-400">de {usuarioMock.ranking.total} usuários</p>
+                  <p className="text-sm text-zinc-400">de {userData.ranking?.total || 0} usuários</p>
                 </div>
 
                 <div className="space-y-4">
                   <div>
                     <div className="flex justify-between items-center mb-1">
                       <span className="text-sm font-medium">Nível</span>
-                      <span className="text-sm text-amber-500 font-medium">{usuarioMock.ranking.nivel}</span>
+                      <span className="text-sm text-amber-500 font-medium">{userData.ranking?.nivel || 'Iniciante'}</span>
                     </div>
                     <Progress
                       value={
-                        (usuarioMock.ranking.avaliacoes / usuarioMock.ranking.proximoNivel.avaliacoesNecessarias) * 100
+                        userData.ranking?.proximoNivel
+                          ? (userData.ranking.avaliacoes / userData.ranking.proximoNivel.avaliacoesNecessarias) * 100
+                          : 0
                       }
                       className="h-2 bg-zinc-700"
                     />
                     <p className="text-xs text-zinc-500 mt-1">
-                      {usuarioMock.ranking.proximoNivel.avaliacoesNecessarias - usuarioMock.ranking.avaliacoes}{" "}
-                      avaliações para {usuarioMock.ranking.proximoNivel.nome}
+                      {userData.ranking?.proximoNivel
+                        ? `${userData.ranking.proximoNivel.avaliacoesNecessarias - userData.ranking.avaliacoes} avaliações para ${userData.ranking.proximoNivel.nome}`
+                        : 'Informações de nível em breve'}
                     </p>
                   </div>
 
-                  <div className="bg-zinc-800 rounded-lg p-3 flex items-center justify-between">
+                  <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-zinc-400">Total de avaliações</p>
-                      <p className="text-lg font-bold">{usuarioMock.ranking.avaliacoes}</p>
+                      <p className="text-lg font-bold">{userData.ranking?.avaliacoes || 0}</p>
                     </div>
                     <div className="bg-amber-500/20 text-amber-500 px-3 py-1 rounded-full text-sm font-medium">
-                      Top {100 - usuarioMock.ranking.percentil.toFixed(1)}%
+                      Top {userData.ranking?.percentil ? (100 - userData.ranking.percentil).toFixed(1) : 100}%
                     </div>
                   </div>
                 </div>
@@ -706,15 +679,15 @@ export default function PerfilPage() {
                       <div className="flex justify-between items-center mb-2">
                         <h3 className="text-sm font-medium">Progresso de filmes assistidos</h3>
                         <span className="text-xs text-zinc-400">
-                          {usuarioMock.totalFilmesAssistidos} de {usuarioMock.totalFilmes}
+                          {userData.ratedList?.length || 0} filmes avaliados
                         </span>
                       </div>
                       <Progress
-                        value={(usuarioMock.totalFilmesAssistidos / usuarioMock.totalFilmes) * 100}
+                        value={userData.totalFilmes ? ((userData.ratedList?.length || 0) / userData.totalFilmes) * 100 : 0}
                         className="h-2 bg-zinc-700"
                       />
                       <p className="text-xs text-zinc-500 mt-1">
-                        Você assistiu {((usuarioMock.totalFilmesAssistidos / usuarioMock.totalFilmes) * 100).toFixed(4)}
+                        Você assistiu {userData.totalFilmes ? (((userData.ratedList?.length || 0) / userData.totalFilmes) * 100).toFixed(1) : 0}
                         % de todos os filmes
                       </p>
                     </div>
@@ -722,18 +695,20 @@ export default function PerfilPage() {
                     <div>
                       <h3 className="text-sm font-medium mb-3">Filmes por gênero</h3>
                       <div className="space-y-3">
-                        {usuarioMock.filmesAssistidosPorGenero.map((item) => (
+                        {userData.filmesAssistidosPorGenero?.map((item) => (
                           <div key={item.genero}>
                             <div className="flex justify-between items-center mb-1">
                               <span className="text-sm">{item.genero}</span>
                               <span className="text-xs text-zinc-400">{item.quantidade} filmes</span>
                             </div>
                             <Progress
-                              value={(item.quantidade / usuarioMock.totalFilmesAssistidos) * 100}
+                              value={((item.quantidade / (userData.ratedList?.length || 1)) * 100)}
                               className="h-2 bg-zinc-700"
                             />
                           </div>
-                        ))}
+                        )) || (
+                          <p className="text-sm text-zinc-500">Estatísticas por gênero em breve</p>
+                        )}
                       </div>
                     </div>
 
@@ -772,7 +747,15 @@ export default function PerfilPage() {
       <EditarPerfilModal
         aberto={editarPerfilAberto}
         onClose={() => setEditarPerfilAberto(false)}
-        usuario={usuarioMock}
+        usuario={userData}
+        onProfileUpdate={async () => {
+          // Recarregar os dados do usuário após atualização
+          const decodedUser = await authService.getUserFromToken()
+          if (decodedUser?.nameid) {
+            const updatedUser = await userService.getUserById(decodedUser.nameid)
+            setUserData(updatedUser)
+          }
+        }}
       />
       <AlterarSenhaModal aberto={alterarSenhaAberto} onClose={() => setAlterarSenhaAberto(false)} />
       {/* Modal de Upload de Foto */}

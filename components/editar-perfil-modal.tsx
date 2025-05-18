@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { Check, Loader2, Mail, User, X } from "lucide-react"
 import {
@@ -16,21 +15,26 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { userService } from "@/app/services/userService"
+import { Switch } from "@/components/ui/switch"
 
 interface EditarPerfilModalProps {
   aberto: boolean
   onClose: () => void
   usuario: {
     id: string
-    nome: string
+    name: string
     email: string
-    avatar: string
+    photo?: string
+    visibilityPublic: boolean
   }
+  onProfileUpdate?: () => void
 }
 
-export default function EditarPerfilModal({ aberto, onClose, usuario }: EditarPerfilModalProps) {
-  const [nome, setNome] = useState(usuario.nome)
+export default function EditarPerfilModal({ aberto, onClose, usuario, onProfileUpdate }: EditarPerfilModalProps) {
+  const [nome, setNome] = useState(usuario.name)
   const [email, setEmail] = useState(usuario.email)
+  const [visibilityPublic, setVisibilityPublic] = useState(usuario.visibilityPublic)
   const [isLoading, setIsLoading] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
   const [sucesso, setSucesso] = useState(false)
@@ -53,20 +57,25 @@ export default function EditarPerfilModal({ aberto, onClose, usuario }: EditarPe
     setSucesso(false)
 
     try {
-      // Simulação de chamada de API
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-
-      // Aqui você faria a chamada real para atualizar o perfil
-      console.log("Perfil atualizado:", { nome, email })
+      await userService.updateProfile(usuario.id, {
+        name: nome,
+        email: email,
+        visibilityPublic: visibilityPublic
+      })
 
       setSucesso(true)
+      
+      // Chamar o callback de atualização se existir
+      if (onProfileUpdate) {
+        onProfileUpdate()
+      }
 
       // Fechar o modal após 1.5 segundos
       setTimeout(() => {
         onClose()
       }, 1500)
-    } catch (error) {
-      setErro("Erro ao atualizar perfil. Tente novamente.")
+    } catch (error: any) {
+      setErro(error.message || "Erro ao atualizar perfil. Tente novamente.")
     } finally {
       setIsLoading(false)
     }
@@ -83,8 +92,8 @@ export default function EditarPerfilModal({ aberto, onClose, usuario }: EditarPe
         <form onSubmit={handleSubmit} className="space-y-6 py-4">
           <div className="flex justify-center mb-6">
             <Avatar className="w-20 h-20 border-2 border-amber-500">
-              <AvatarImage src={usuario.avatar} alt={usuario.nome} />
-              <AvatarFallback className="bg-zinc-800 text-xl">{usuario.nome.charAt(0)}</AvatarFallback>
+              <AvatarImage src={usuario.photo} alt={usuario.name} />
+              <AvatarFallback className="bg-zinc-800 text-xl">{usuario.name.charAt(0)}</AvatarFallback>
             </Avatar>
           </div>
 
@@ -120,6 +129,17 @@ export default function EditarPerfilModal({ aberto, onClose, usuario }: EditarPe
                   placeholder="seu.email@exemplo.com"
                 />
               </div>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <Label htmlFor="visibility" className="text-white">
+                Perfil público
+              </Label>
+              <Switch
+                id="visibility"
+                checked={visibilityPublic}
+                onCheckedChange={setVisibilityPublic}
+              />
             </div>
           </div>
 

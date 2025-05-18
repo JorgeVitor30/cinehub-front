@@ -10,9 +10,9 @@ export interface RateRequest {
 
 export interface RateResponse {
   movie: Movie
-  rate: number
-  comment: string
-}
+    rate: number
+    comment: string
+  }
 
 class RateService {
   private baseUrl = `${API_BASE_URL}/rate`
