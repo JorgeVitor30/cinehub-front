@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
@@ -29,115 +29,50 @@ import {
 import { Badge } from "@/components/ui/badge"
 import FilmeModal, { type FilmeDetalhado } from "@/components/filme-modal"
 import EditarFilmeModal from "@/components/admin/editar-filme-modal"
-
-// Dados mockados para a lista de filmes
-const filmesMock = [
-  {
-    id: "1",
-    titulo: "Inception",
-    capa: "https://image.tmdb.org/t/p/w500//oYuLEt3zVCKq57qu2F8dT7NIa6f.jpg",
-    banner: "https://image.tmdb.org/t/p/original/8ZTVqvKDQ8emSGUEMjsS4yHAwrp.jpg",
-    avaliacao: 8.8,
-    ano: 2010,
-    generos: ["Ação", "Ficção Científica"],
-    status: "publicado",
-    dataCriacao: "10/07/2023",
-    duracao: "2h 28m",
-    lingua: "Inglês",
-    orcamento: "$160 milhões",
-    descricao: "Um ladrão que rouba segredos corporativos através do uso da tecnologia de compartilhamento de sonhos.",
-    producoes: [{ nome: "Warner Bros. Pictures" }, { nome: "Legendary Pictures" }, { nome: "Syncopy" }],
-    keywords: ["Sonhos", "Subconsciente", "Roubo", "Labirinto", "Arquitetura", "Tempo"],
-  },
-  {
-    id: "2",
-    titulo: "Interestellar",
-    capa: "https://image.tmdb.org/t/p/w500/pbrkL804c8yAv3zBZR4QPEafpAR.jpg",
-    banner: "https://image.tmdb.org/t/p/original/rAiYTfKGqDCRIIqo664sY9XZIvQ.jpg",
-    avaliacao: 8.6,
-    ano: 2023,
-    generos: ["Drama", "Ficção Científica"],
-    status: "publicado",
-    dataCriacao: "15/08/2023",
-    duracao: "3h 00m",
-    lingua: "Inglês",
-    orcamento: "$200 milhões",
-    descricao:
-      "A história do cientista americano J. Robert Oppenheimer e seu papel no desenvolvimento da bomba atômica.",
-    producoes: [
-      { nome: "Paramount Pictures" },
-      { nome: "Warner Bros. Pictures" },
-      { nome: "Legendary Pictures" },
-      { nome: "Syncopy" },
-    ],
-    keywords: ["Espaço", "Buracos negros", "Viagem no tempo", "Relatividade", "Família"],
-  },
-  {
-    id: "3",
-    titulo: "Pobres Criaturas",
-    capa: "https://image.tmdb.org/t/p/w500//oYuLEt3zVCKq57qu2F8dT7NIa6f.jpg",
-    banner: "https://image.tmdb.org/t/p/original/jkKVLzLWjSvTnc84VzeljhSy6j8.jpg",
-    avaliacao: 8.5,
-    ano: 2023,
-    generos: ["Fantasia", "Comédia", "Drama"],
-    status: "publicado",
-    dataCriacao: "20/01/2024",
-    duracao: "2h 21m",
-    lingua: "Inglês",
-    orcamento: "$35 milhões",
-    descricao: "A jovem Bella é trazida de volta à vida pelo cientista Dr. Godwin Baxter.",
-    producoes: [{ nome: "Searchlight Pictures" }, { nome: "Film4 Productions" }, { nome: "Element Pictures" }],
-    keywords: ["Monstro", "Experimento", "Viagem", "Liberdade", "Descoberta"],
-  },
-  {
-    id: "4",
-    titulo: "Zona de Interesse",
-    capa: "https://image.tmdb.org/t/p/w500//oYuLEt3zVCKq57qu2F8dT7NIa6f.jpg",
-    banner: "https://image.tmdb.org/t/p/original/A7EByudX0eOzlkQ2FIbogzyazm2.jpg",
-    avaliacao: 7.6,
-    ano: 2023,
-    generos: ["Drama", "História", "Guerra"],
-    status: "publicado",
-    dataCriacao: "05/02/2024",
-    duracao: "1h 45m",
-    lingua: "Alemão",
-    orcamento: "$15 milhões",
-    descricao: "A vida familiar de um oficial nazista e sua esposa ao lado de um campo de concentração.",
-    producoes: [{ nome: "A24" }, { nome: "Film4 Productions" }, { nome: "Extreme Emotions" }],
-    keywords: ["Nazismo", "Segunda Guerra", "Holocausto", "Família", "Moral"],
-  },
-  {
-    id: "5",
-    titulo: "Anatomia de uma Queda",
-    capa: "https://image.tmdb.org/t/p/w500/pbrkL804c8yAv3zBZR4QPEafpAR.jpg",
-    banner: "https://image.tmdb.org/t/p/original/hYqOjJ7Gh1fbqXrxlIao1g8ZehF.jpg",
-    avaliacao: 8.4,
-    ano: 2023,
-    generos: ["Drama", "Mistério", "Crime"],
-    status: "publicado",
-    dataCriacao: "12/12/2023",
-    duracao: "2h 31m",
-    lingua: "Francês",
-    orcamento: "$6 milhões",
-    descricao: "Uma mulher é suspeita de assassinar o marido e seu filho cego enfrenta um dilema moral.",
-    producoes: [{ nome: "Les Films du Losange" }, { nome: "France 2 Cinéma" }, { nome: "Arte France Cinéma" }],
-    keywords: ["Julgamento", "Investigação", "Morte", "Família", "Montanha"],
-  },
-]
+import { movieService, type Movie } from "@/app/services/movieService"
 
 export default function AdminFilmesPage() {
   const router = useRouter()
-  const [filmes, setFilmes] = useState(filmesMock)
+  const [filmes, setFilmes] = useState<Movie[]>([])
   const [termoBusca, setTermoBusca] = useState("")
   const [filmeParaExcluir, setFilmeParaExcluir] = useState<string | null>(null)
   const [filmeParaVisualizar, setFilmeParaVisualizar] = useState<FilmeDetalhado | null>(null)
   const [filmeParaEditar, setFilmeParaEditar] = useState<FilmeDetalhado | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [paginaAtual, setPaginaAtual] = useState(1)
+  const [totalItems, setTotalItems] = useState(0)
+  const ITEMS_POR_PAGINA = 5
+
+  useEffect(() => {
+    const fetchFilmes = async () => {
+      try {
+        setIsLoading(true)
+        const response = await movieService.getAllMoviesPage(
+          paginaAtual,
+          ITEMS_POR_PAGINA,
+          termoBusca
+        )
+        setFilmes(response.content || [])
+        setTotalItems(response.total || 0)
+        setError(null)
+      } catch (err) {
+        console.error("Erro ao carregar filmes:", err)
+        setError(err instanceof Error ? err.message : "Erro ao carregar filmes")
+        setFilmes([])
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchFilmes()
+  }, [paginaAtual, termoBusca])
 
   // Filtrar filmes com base no termo de busca
   const filmesFiltrados = filmes.filter(
     (filme) =>
-      filme.titulo.toLowerCase().includes(termoBusca.toLowerCase()) ||
-      filme.generos.some((genero) => genero.toLowerCase().includes(termoBusca.toLowerCase())),
+      filme.title.toLowerCase().includes(termoBusca.toLowerCase()) ||
+      filme.genres.split(", ").some((genero) => genero.toLowerCase().includes(termoBusca.toLowerCase())),
   )
 
   // Função para excluir um filme
@@ -174,6 +109,68 @@ export default function AdminFilmesPage() {
       console.error("Erro ao salvar filme:", error)
       return Promise.reject(error)
     }
+  }
+
+  const handleOpenFilme = (filme: Movie) => {
+    const filmeDetalhado: FilmeDetalhado = {
+      id: filme.id,
+      titulo: filme.title,
+      capa: filme.posterPhotoUrl,
+      banner: filme.backPhotoUrl,
+      descricao: filme.overview,
+      avaliacao: filme.voteAverage,
+      duracao: `${Math.floor(filme.runTime / 60)}h ${filme.runTime % 60}m`,
+      ano: new Date(filme.releaseDate).getFullYear(),
+      generos: filme.genres.split(", "),
+      lingua: filme.originalLanguage,
+      orcamento: filme.budget > 0 ? `$${filme.budget.toLocaleString()}` : "Não informado",
+      producoes: filme.productions.split(", ").map(nome => ({ nome })),
+      keywords: filme.keyWords.split(", ")
+    }
+    return filmeDetalhado
+  }
+
+  const totalPaginas = Math.ceil(totalItems / ITEMS_POR_PAGINA)
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-zinc-900 text-white">
+        <div className="flex h-screen overflow-hidden">
+          <main className="flex-1 overflow-y-auto bg-zinc-900">
+            <div className="p-6 md:p-8">
+              <div className="flex items-center justify-center min-h-[60vh]">
+                <div className="text-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500 mx-auto mb-2"></div>
+                  <p>Carregando filmes...</p>
+                </div>
+              </div>
+            </div>
+          </main>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-zinc-900 text-white">
+        <div className="flex h-screen overflow-hidden">
+          <main className="flex-1 overflow-y-auto bg-zinc-900">
+            <div className="p-6 md:p-8">
+              <div className="text-center text-red-500 p-4">
+                <p>Erro: {error}</p>
+                <Button 
+                  onClick={() => window.location.reload()} 
+                  className="mt-4"
+                >
+                  Tentar novamente
+                </Button>
+              </div>
+            </div>
+          </main>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -244,21 +241,23 @@ export default function AdminFilmesPage() {
                           <div className="flex items-center gap-3">
                             <div className="relative w-12 h-16 overflow-hidden rounded">
                               <Image
-                                src={filme.capa || "/placeholder.svg"}
-                                alt={filme.titulo}
+                                src={filme.posterPhotoUrl || "/placeholder.svg"}
+                                alt={filme.title}
                                 fill
                                 className="object-cover"
                               />
                             </div>
                             <div>
-                              <p className="font-medium">{filme.titulo}</p>
-                              <p className="text-xs text-zinc-400">Adicionado em {filme.dataCriacao}</p>
+                              <p className="font-medium">{filme.title}</p>
+                              <p className="text-xs text-zinc-400">
+                                Lançado em {new Date(filme.releaseDate).toLocaleDateString()}
+                              </p>
                             </div>
                           </div>
                         </TableCell>
                         <TableCell>
                           <div className="flex flex-wrap gap-1">
-                            {filme.generos.map((genero, index) => (
+                            {filme.genres.split(", ").map((genero, index) => (
                               <Badge
                                 key={index}
                                 variant="outline"
@@ -272,17 +271,17 @@ export default function AdminFilmesPage() {
                         <TableCell className="text-center">
                           <div className="flex items-center justify-center">
                             <span className="bg-amber-500/20 text-amber-500 px-2 py-1 rounded-full text-xs font-medium">
-                              {filme.avaliacao.toFixed(1)}
+                              {filme.voteAverage.toFixed(1)}
                             </span>
                           </div>
                         </TableCell>
-                        <TableCell className="text-center">{filme.ano}</TableCell>
                         <TableCell className="text-center">
-                          {filme.status === "publicado" ? (
-                            <Badge className="bg-green-500/20 text-green-500 border-0">Publicado</Badge>
-                          ) : (
-                            <Badge className="bg-zinc-500/20 text-zinc-400 border-0">Rascunho</Badge>
-                          )}
+                          {new Date(filme.releaseDate).getFullYear()}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Badge className="bg-green-500/20 text-green-500 border-0">
+                            Publicado
+                          </Badge>
                         </TableCell>
                         <TableCell className="text-right">
                           <DropdownMenu>
@@ -297,14 +296,14 @@ export default function AdminFilmesPage() {
                               <DropdownMenuSeparator className="bg-zinc-700" />
                               <DropdownMenuItem
                                 className="hover:bg-zinc-700 cursor-pointer"
-                                onClick={() => setFilmeParaVisualizar(filme as FilmeDetalhado)}
+                                onClick={() => setFilmeParaVisualizar(handleOpenFilme(filme))}
                               >
                                 <Eye className="mr-2 h-4 w-4" />
                                 Visualizar
                               </DropdownMenuItem>
                               <DropdownMenuItem
                                 className="hover:bg-zinc-700 cursor-pointer"
-                                onClick={() => setFilmeParaEditar(filme as FilmeDetalhado)}
+                                onClick={() => setFilmeParaEditar(handleOpenFilme(filme))}
                               >
                                 <Edit className="mr-2 h-4 w-4" />
                                 Editar
@@ -335,15 +334,31 @@ export default function AdminFilmesPage() {
             {/* Paginação */}
             <div className="flex items-center justify-between mt-6">
               <p className="text-sm text-zinc-400">
-                Mostrando <span className="font-medium text-white">{filmesFiltrados.length}</span> de{" "}
-                <span className="font-medium text-white">{filmes.length}</span> filmes
+                Mostrando <span className="font-medium text-white">{filmes.length}</span> de{" "}
+                <span className="font-medium text-white">{totalItems}</span> filmes
               </p>
               <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" className="border-zinc-700 text-zinc-400 hover:bg-zinc-800">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="border-zinc-700 text-zinc-400 hover:bg-zinc-800"
+                  onClick={() => setPaginaAtual(prev => Math.max(1, prev - 1))}
+                  disabled={paginaAtual === 1}
+                >
                   <ChevronLeft className="h-4 w-4" />
                   <span className="sr-only">Página anterior</span>
                 </Button>
-                <Button variant="outline" size="sm" className="border-zinc-700 text-zinc-400 hover:bg-zinc-800">
+                <span className="text-sm text-zinc-400">
+                  Página <span className="font-medium text-white">{paginaAtual}</span> de{" "}
+                  <span className="font-medium text-white">{Math.ceil(totalItems / ITEMS_POR_PAGINA)}</span>
+                </span>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="border-zinc-700 text-zinc-400 hover:bg-zinc-800"
+                  onClick={() => setPaginaAtual(prev => Math.min(Math.ceil(totalItems / ITEMS_POR_PAGINA), prev + 1))}
+                  disabled={paginaAtual === Math.ceil(totalItems / ITEMS_POR_PAGINA)}
+                >
                   <ChevronRight className="h-4 w-4" />
                   <span className="sr-only">Próxima página</span>
                 </Button>
