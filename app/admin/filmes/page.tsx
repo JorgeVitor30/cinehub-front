@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
@@ -30,11 +30,14 @@ import { Badge } from "@/components/ui/badge"
 import FilmeModal, { type FilmeDetalhado } from "@/components/filme-modal"
 import EditarFilmeModal from "@/components/admin/editar-filme-modal"
 import { movieService, type Movie } from "@/app/services/movieService"
+import debounce from 'lodash/debounce'
 
 export default function AdminFilmesPage() {
   const router = useRouter()
+  const inputRef = useRef<HTMLInputElement>(null)
   const [filmes, setFilmes] = useState<Movie[]>([])
   const [termoBusca, setTermoBusca] = useState("")
+  const [valorInput, setValorInput] = useState("")
   const [filmeParaExcluir, setFilmeParaExcluir] = useState<string | null>(null)
   const [filmeParaVisualizar, setFilmeParaVisualizar] = useState<FilmeDetalhado | null>(null)
   const [filmeParaEditar, setFilmeParaEditar] = useState<FilmeDetalhado | null>(null)
@@ -43,6 +46,19 @@ export default function AdminFilmesPage() {
   const [paginaAtual, setPaginaAtual] = useState(1)
   const [totalItems, setTotalItems] = useState(0)
   const ITEMS_POR_PAGINA = 5
+
+  const debouncedSearch = useCallback(
+    debounce((valor: string) => {
+      setTermoBusca(valor)
+    }, 500),
+    []
+  )
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const valor = e.target.value
+    setValorInput(valor)
+    debouncedSearch(valor)
+  }
 
   useEffect(() => {
     const fetchFilmes = async () => {
@@ -54,7 +70,7 @@ export default function AdminFilmesPage() {
           termoBusca
         )
         setFilmes(response.content || [])
-        setTotalItems(response.total || 0)
+        setTotalItems(response.totalElements || 0)
         setError(null)
       } catch (err) {
         console.error("Erro ao carregar filmes:", err)
@@ -210,8 +226,9 @@ export default function AdminFilmesPage() {
                 type="search"
                 placeholder="Buscar filmes por título ou gênero..."
                 className="pl-10 bg-zinc-800 border-zinc-700 focus-visible:ring-amber-500 text-white placeholder:text-zinc-400"
-                value={termoBusca}
-                onChange={(e) => setTermoBusca(e.target.value)}
+                value={valorInput}
+                onChange={handleInputChange}
+                ref={inputRef}
               />
             </div>
 

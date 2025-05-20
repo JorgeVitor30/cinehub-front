@@ -198,7 +198,7 @@ export default function FilmeModal({ filme, aberto, onClose, isFavorited = false
       if (err instanceof Error) {
         setErro(err.message)
       } else {
-        setErro("Não foi possível registrar sua avaliação. Tente novamente.")
+      setErro("Não foi possível registrar sua avaliação. Tente novamente.")
       }
     } finally {
       setIsAvaliando(false)
@@ -372,7 +372,7 @@ export default function FilmeModal({ filme, aberto, onClose, isFavorited = false
                             Cancelar
                           </Button>
                           <Button 
-                            size="sm"
+                            size="sm" 
                             onClick={() => {
                               setEditandoAnotacao(false)
                             }}
@@ -422,25 +422,25 @@ export default function FilmeModal({ filme, aberto, onClose, isFavorited = false
                         <span className="text-2xl font-bold text-amber-500">{avaliacaoTemporaria}/10</span>
                       </div>
 
-                      <Slider
-                        min={1}
-                        max={10}
-                        step={1}
-                        value={[avaliacaoTemporaria]}
-                        onValueChange={(value) => setAvaliacaoTemporaria(value[0])}
-                        className="w-full"
-                      />
+                <Slider
+                  min={1}
+                  max={10}
+                  step={1}
+                  value={[avaliacaoTemporaria]}
+                  onValueChange={(value) => setAvaliacaoTemporaria(value[0])}
+                  className="w-full"
+                />
 
-                      <div className="flex justify-between items-center">
-                        <div>
-                          {erro && <p className="text-red-500 text-sm">{erro}</p>}
-                          {sucessoAvaliacao && (
-                            <p className="text-green-500 text-sm flex items-center">
-                              <Check className="h-3 w-3 mr-1" />
-                              Avaliação registrada com sucesso!
-                            </p>
-                          )}
-                        </div>
+                <div className="flex justify-between items-center">
+                  <div>
+                    {erro && <p className="text-red-500 text-sm">{erro}</p>}
+                    {sucessoAvaliacao && (
+                      <p className="text-green-500 text-sm flex items-center">
+                        <Check className="h-3 w-3 mr-1" />
+                        Avaliação registrada com sucesso!
+                      </p>
+                    )}
+                  </div>
 
                         <Button
                           onClick={handleAvaliar}

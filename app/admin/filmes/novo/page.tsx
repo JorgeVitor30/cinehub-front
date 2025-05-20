@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { ArrowLeft, Plus, X, Upload, Loader2, Save, Film, Clock, Calendar, DollarSign, Globe, Tag } from "lucide-react"
@@ -14,71 +13,160 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import Link from "next/link"
+import { Switch } from "@/components/ui/switch"
+
+// Enum temporário de gêneros - substituir pelo seu enum quando criar
+const GENRES = [
+  "Ação",
+  "Aventura",
+  "Animação",
+  "Comédia",
+  "Crime",
+  "Documentário",
+  "Drama",
+  "Família",
+  "Fantasia",
+  "História",
+  "Terror",
+  "Música",
+  "Mistério",
+  "Romance",
+  "Ficção Científica",
+  "Cinema TV",
+  "Thriller",
+  "Guerra",
+  "Faroeste"
+]
+
+interface NovoFilme {
+  title: string
+  overview: string
+  releaseDate: string
+  runTime: number
+  adult: boolean
+  budget: number
+  originalLanguage: string
+  tagline: string
+  keyWords: string
+  productions: string
+  genres: string
+}
 
 export default function NovoFilmePage() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [activeTab, setActiveTab] = useState("informacoes")
-  const [novoGenero, setNovoGenero] = useState("")
-  const [generos, setGeneros] = useState<string[]>([])
+  const [generosSelecionados, setGenerosSelecionados] = useState<string[]>([])
   const [novaKeyword, setNovaKeyword] = useState("")
   const [keywords, setKeywords] = useState<string[]>([])
   const [novaProducao, setNovaProducao] = useState("")
   const [producoes, setProducoes] = useState<string[]>([])
+  const [filme, setFilme] = useState<NovoFilme>({
+    title: "",
+    overview: "",
+    releaseDate: "",
+    runTime: 0,
+    adult: false,
+    budget: 0,
+    originalLanguage: "",
+    tagline: "",
+    keyWords: "",
+    productions: "",
+    genres: ""
+  })
 
-  // Função para adicionar um novo gênero
-  const adicionarGenero = () => {
-    if (novoGenero.trim() && !generos.includes(novoGenero.trim())) {
-      setGeneros([...generos, novoGenero.trim()])
-      setNovoGenero("")
-    }
-  }
-
-  // Função para remover um gênero
-  const removerGenero = (genero: string) => {
-    setGeneros(generos.filter((g) => g !== genero))
+  // Handler para atualizar o estado do filme
+  const handleChange = (field: keyof NovoFilme, value: string | number | boolean) => {
+    setFilme(prev => ({
+      ...prev,
+      [field]: value
+    }))
   }
 
   // Função para adicionar uma nova keyword
   const adicionarKeyword = () => {
     if (novaKeyword.trim() && !keywords.includes(novaKeyword.trim())) {
-      setKeywords([...keywords, novaKeyword.trim()])
+      const newKeywords = [...keywords, novaKeyword.trim()]
+      setKeywords(newKeywords)
+      handleChange('keyWords', newKeywords.join(", "))
       setNovaKeyword("")
     }
   }
 
   // Função para remover uma keyword
   const removerKeyword = (keyword: string) => {
-    setKeywords(keywords.filter((k) => k !== keyword))
+    const newKeywords = keywords.filter((k) => k !== keyword)
+    setKeywords(newKeywords)
+    handleChange('keyWords', newKeywords.join(", "))
   }
 
   // Função para adicionar uma nova produtora
   const adicionarProducao = () => {
     if (novaProducao.trim() && !producoes.includes(novaProducao.trim())) {
-      setProducoes([...producoes, novaProducao.trim()])
+      const newProducoes = [...producoes, novaProducao.trim()]
+      setProducoes(newProducoes)
+      handleChange('productions', newProducoes.join(", "))
       setNovaProducao("")
     }
   }
 
   // Função para remover uma produtora
   const removerProducao = (producao: string) => {
-    setProducoes(producoes.filter((p) => p !== producao))
+    const newProducoes = producoes.filter((p) => p !== producao)
+    setProducoes(newProducoes)
+    handleChange('productions', newProducoes.join(", "))
+  }
+
+  // Handler para selecionar/deselecionar gêneros
+  const toggleGenero = (genero: string) => {
+    const newGeneros = generosSelecionados.includes(genero)
+      ? generosSelecionados.filter(g => g !== genero)
+      : [...generosSelecionados, genero]
+    
+    setGenerosSelecionados(newGeneros)
+    handleChange('genres', newGeneros.join(", "))
+  }
+
+  // Função para formatar o valor em dólar
+  const formatCurrency = (value: string) => {
+    // Remove todos os caracteres não numéricos
+    const numbers = value.replace(/\D/g, "")
+    
+    // Converte para número e formata como moeda
+    const formatted = new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(Number(numbers))
+
+    return formatted
+  }
+
+  // Handler para o campo de orçamento
+  const handleBudgetChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/[^0-9]/g, "")
+    handleChange("budget", parseInt(value) || 0)
   }
 
   // Função para salvar o filme
   const salvarFilme = async (e: React.FormEvent) => {
     e.preventDefault()
-
     setIsLoading(true)
 
     try {
-      // Simulação de envio para API
-      await new Promise((resolve) => setTimeout(resolve, 1500))
+      const response = await fetch('http://localhost:5129/api/movies', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(filme)
+      })
 
-      // Aqui você faria a chamada real para a API
-      console.log("Filme salvo com sucesso!")
+      if (!response.ok) {
+        throw new Error('Erro ao criar filme')
+      }
 
-      // Redirecionar para a lista de filmes
       router.push("/admin/filmes")
     } catch (error) {
       console.error("Erro ao salvar filme:", error)
@@ -90,9 +178,6 @@ export default function NovoFilmePage() {
   return (
     <div className="min-h-screen bg-zinc-900 text-white">
       <div className="flex h-screen overflow-hidden">
-        {/* Sidebar é renderizada pelo layout compartilhado */}
-
-        {/* Conteúdo principal */}
         <main className="flex-1 overflow-y-auto bg-zinc-900">
           <div className="p-6 md:p-8">
             <div className="flex items-center gap-4 mb-8">
@@ -119,7 +204,6 @@ export default function NovoFilmePage() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              {/* Formulário principal */}
               <div className="lg:col-span-2">
                 <form onSubmit={salvarFilme}>
                   <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -136,20 +220,16 @@ export default function NovoFilmePage() {
                       >
                         Detalhes Adicionais
                       </TabsTrigger>
-                      <TabsTrigger
-                        value="midia"
-                        className="data-[state=active]:bg-amber-500 data-[state=active]:text-black"
-                      >
-                        Mídia
-                      </TabsTrigger>
                     </TabsList>
 
                     {/* Aba de Informações Básicas */}
                     <TabsContent value="informacoes" className="space-y-6">
                       <div className="space-y-2">
-                        <Label htmlFor="titulo">Título do Filme</Label>
+                        <Label htmlFor="title">Título do Filme</Label>
                         <Input
-                          id="titulo"
+                          id="title"
+                          value={filme.title}
+                          onChange={(e) => handleChange('title', e.target.value)}
                           placeholder="Digite o título do filme"
                           className="bg-zinc-800 border-zinc-700 focus-visible:ring-amber-500"
                           required
@@ -157,34 +237,49 @@ export default function NovoFilmePage() {
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="descricao">Sinopse</Label>
+                        <Label htmlFor="overview">Sinopse</Label>
                         <Textarea
-                          id="descricao"
+                          id="overview"
+                          value={filme.overview}
+                          onChange={(e) => handleChange('overview', e.target.value)}
                           placeholder="Digite a sinopse do filme"
                           className="bg-zinc-800 border-zinc-700 focus-visible:ring-amber-500 min-h-32"
                           required
                         />
                       </div>
 
+                      <div className="space-y-2">
+                        <Label htmlFor="tagline">Tagline</Label>
+                        <Input
+                          id="tagline"
+                          value={filme.tagline}
+                          onChange={(e) => handleChange('tagline', e.target.value)}
+                          placeholder="Digite a tagline do filme"
+                          className="bg-zinc-800 border-zinc-700 focus-visible:ring-amber-500"
+                          required
+                        />
+                      </div>
+
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                          <Label htmlFor="ano">Ano de Lançamento</Label>
+                          <Label htmlFor="releaseDate">Data de Lançamento</Label>
                           <Input
-                            id="ano"
-                            type="number"
-                            placeholder="Ex: 2024"
+                            id="releaseDate"
+                            type="date"
+                            value={filme.releaseDate.split('T')[0]}
+                            onChange={(e) => handleChange('releaseDate', new Date(e.target.value).toISOString())}
                             className="bg-zinc-800 border-zinc-700 focus-visible:ring-amber-500"
-                            min="1900"
-                            max="2099"
                             required
                           />
                         </div>
 
                         <div className="space-y-2">
-                          <Label htmlFor="duracao">Duração (em minutos)</Label>
+                          <Label htmlFor="runTime">Duração (em minutos)</Label>
                           <Input
-                            id="duracao"
+                            id="runTime"
                             type="number"
+                            value={filme.runTime}
+                            onChange={(e) => handleChange('runTime', parseInt(e.target.value))}
                             placeholder="Ex: 120"
                             className="bg-zinc-800 border-zinc-700 focus-visible:ring-amber-500"
                             min="1"
@@ -195,36 +290,20 @@ export default function NovoFilmePage() {
 
                       <div className="space-y-2">
                         <Label>Gêneros</Label>
-                        <div className="flex flex-wrap gap-2 mb-2">
-                          {generos.map((genero) => (
-                            <Badge key={genero} className="bg-zinc-700 hover:bg-zinc-600 text-white">
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                          {GENRES.map((genero) => (
+                            <div
+                              key={genero}
+                              className={`p-2 rounded cursor-pointer transition-colors ${
+                                generosSelecionados.includes(genero)
+                                  ? 'bg-amber-500 text-black'
+                                  : 'bg-zinc-800 hover:bg-zinc-700'
+                              }`}
+                              onClick={() => toggleGenero(genero)}
+                            >
                               {genero}
-                              <button
-                                type="button"
-                                onClick={() => removerGenero(genero)}
-                                className="ml-1 hover:text-red-400"
-                              >
-                                <X className="h-3 w-3" />
-                              </button>
-                            </Badge>
+                            </div>
                           ))}
-                        </div>
-                        <div className="flex gap-2">
-                          <Input
-                            placeholder="Adicionar gênero"
-                            value={novoGenero}
-                            onChange={(e) => setNovoGenero(e.target.value)}
-                            className="bg-zinc-800 border-zinc-700 focus-visible:ring-amber-500"
-                            onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), adicionarGenero())}
-                          />
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={adicionarGenero}
-                            className="border-zinc-700 hover:bg-zinc-800"
-                          >
-                            <Plus className="h-4 w-4" />
-                          </Button>
                         </div>
                       </div>
                     </TabsContent>
@@ -232,8 +311,11 @@ export default function NovoFilmePage() {
                     {/* Aba de Detalhes Adicionais */}
                     <TabsContent value="detalhes" className="space-y-6">
                       <div className="space-y-2">
-                        <Label htmlFor="lingua">Idioma Principal</Label>
-                        <Select defaultValue="pt-BR">
+                        <Label htmlFor="originalLanguage">Idioma Principal</Label>
+                        <Select 
+                          value={filme.originalLanguage}
+                          onValueChange={(value) => handleChange('originalLanguage', value)}
+                        >
                           <SelectTrigger className="bg-zinc-800 border-zinc-700 focus:ring-amber-500">
                             <SelectValue placeholder="Selecione o idioma" />
                           </SelectTrigger>
@@ -250,15 +332,30 @@ export default function NovoFilmePage() {
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="orcamento">Orçamento (em milhões de dólares)</Label>
-                        <Input
-                          id="orcamento"
-                          type="number"
-                          placeholder="Ex: 150"
-                          className="bg-zinc-800 border-zinc-700 focus-visible:ring-amber-500"
-                          min="0"
-                          step="0.1"
+                        <Label htmlFor="budget">Orçamento</Label>
+                        <div className="relative">
+                          <Input
+                            id="budget"
+                            type="text"
+                            value={formatCurrency(filme.budget.toString())}
+                            onChange={handleBudgetChange}
+                            placeholder="Ex: $150,000,000"
+                            className="bg-zinc-800 border-zinc-700 focus-visible:ring-amber-500 pl-10"
+                          />
+                          <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+                        </div>
+                      </div>
+
+                      <div className="flex items-center space-x-2">
+                        <Switch
+                          id="adult"
+                          checked={filme.adult}
+                          onCheckedChange={(checked) => handleChange('adult', checked)}
                         />
+                        <Label htmlFor="adult" className="flex items-center gap-2">
+                          Conteúdo adulto
+                          <span className="text-lg" role="img" aria-label="18 plus">🔞</span>
+                        </Label>
                       </div>
 
                       <div className="space-y-2">
@@ -335,37 +432,6 @@ export default function NovoFilmePage() {
                         </div>
                       </div>
                     </TabsContent>
-
-                    {/* Aba de Mídia */}
-                    <TabsContent value="midia" className="space-y-6">
-                      <div className="space-y-2">
-                        <Label>Imagem de Capa</Label>
-                        <div className="border-2 border-dashed border-zinc-700 rounded-lg p-6 text-center">
-                          <div className="flex flex-col items-center">
-                            <Upload className="h-10 w-10 text-zinc-500 mb-2" />
-                            <p className="text-zinc-400 mb-2">Arraste e solte uma imagem ou</p>
-                            <Button type="button" variant="outline" className="border-zinc-700 hover:bg-zinc-800">
-                              Selecionar arquivo
-                            </Button>
-                            <p className="text-xs text-zinc-500 mt-2">PNG, JPG ou WEBP (máx. 2MB)</p>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label>Imagem de Banner</Label>
-                        <div className="border-2 border-dashed border-zinc-700 rounded-lg p-6 text-center">
-                          <div className="flex flex-col items-center">
-                            <Upload className="h-10 w-10 text-zinc-500 mb-2" />
-                            <p className="text-zinc-400 mb-2">Arraste e solte uma imagem ou</p>
-                            <Button type="button" variant="outline" className="border-zinc-700 hover:bg-zinc-800">
-                              Selecionar arquivo
-                            </Button>
-                            <p className="text-xs text-zinc-500 mt-2">PNG, JPG ou WEBP (máx. 4MB)</p>
-                          </div>
-                        </div>
-                      </div>
-                    </TabsContent>
                   </Tabs>
 
                   <div className="flex justify-end mt-8 pt-6 border-t border-zinc-800">
@@ -406,10 +472,10 @@ export default function NovoFilmePage() {
                 <Card className="bg-zinc-800 border-zinc-700 text-white sticky top-8">
                   <CardContent className="p-6 space-y-6">
                     <div>
-                      <h3 className="text-lg font-semibold mb-2">Preview</h3>
-                      <div className="aspect-[2/3] bg-zinc-700 rounded-lg flex items-center justify-center">
-                        <Film className="h-12 w-12 text-zinc-500" />
-                      </div>
+                      <h3 className="text-lg font-semibold mb-2">Preview dos Dados</h3>
+                      <pre className="bg-zinc-900 p-4 rounded-lg overflow-auto text-xs">
+                        {JSON.stringify(filme, null, 2)}
+                      </pre>
                     </div>
 
                     <div>
@@ -425,11 +491,11 @@ export default function NovoFilmePage() {
                         </li>
                         <li className="flex gap-2">
                           <Calendar className="h-5 w-5 text-amber-500 flex-shrink-0" />
-                          <span>Informe o ano de lançamento original do filme.</span>
+                          <span>Informe a data de lançamento do filme.</span>
                         </li>
                         <li className="flex gap-2">
                           <DollarSign className="h-5 w-5 text-amber-500 flex-shrink-0" />
-                          <span>O orçamento deve ser informado em milhões de dólares.</span>
+                          <span>O orçamento deve ser informado em dólares (ex: 150000000).</span>
                         </li>
                         <li className="flex gap-2">
                           <Globe className="h-5 w-5 text-amber-500 flex-shrink-0" />
