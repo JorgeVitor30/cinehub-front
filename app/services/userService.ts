@@ -29,6 +29,7 @@ export interface User {
   visibilityPublic: boolean
   createdAt: string
   favorites: Movie[]
+  genre: string
   ratedList?: {
     id: string
     movie: Movie

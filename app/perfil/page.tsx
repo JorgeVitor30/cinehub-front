@@ -325,7 +325,7 @@ export default function PerfilPage() {
                     </div>
                     <div>
                       <p className="text-sm text-zinc-400">Gênero mais assistido</p>
-                      <p className="font-medium">Em breve</p>
+                      <p className="font-medium">{userData.genre || 'Em breve'}</p>
                     </div>
                   </div>
                 </div>

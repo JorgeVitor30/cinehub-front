@@ -334,7 +334,7 @@ export default function NovoFilmePage() {
                       <div className="space-y-2">
                         <Label htmlFor="budget">Orçamento</Label>
                         <div className="relative">
-                          <Input
+                        <Input
                             id="budget"
                             type="text"
                             value={formatCurrency(filme.budget.toString())}
