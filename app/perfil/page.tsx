@@ -43,6 +43,7 @@ import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { type Movie } from "@/app/services/movieService"
 import { type User } from "@/app/services/userService"
+import { rateService } from "@/app/services/rateService"
 
 // Filmes recomendados mockados
 const filmesRecomendadosMock = [
@@ -155,41 +156,69 @@ export default function PerfilPage() {
   const handleRatingUpdate = async (movieId: string, newRating: number, newComment: string) => {
     if (!userData) return
 
-    // Atualizar o estado local do userData com a nova avaliação
-    setUserData(prevData => {
-      if (!prevData?.ratedList) return prevData
+    try {
+      // Encontrar a avaliação existente
+      const existingRating = userData.ratedList?.find(rated => rated.movie.id === movieId)
 
-      const updatedRatedList = prevData.ratedList.map(rated => {
-        if (rated.movie.id === movieId) {
-          return {
-            ...rated,
-            rate: newRating,
-            comment: newComment
+      if (existingRating) {
+        // Se existe uma avaliação, atualiza mantendo a nota atual se ela não mudou
+        const currentRating = existingRating.rate
+        // Se newRating é igual à avaliação atual, mantemos a mesma nota
+        const rateToUpdate = newRating === currentRating ? currentRating : newRating
+        await rateService.updateRate(existingRating.id, rateToUpdate, newComment)
+      } else {
+        // Se não existe, cria uma nova
+        await rateService.createRate({
+          movieId,
+          userId: userData.id,
+          rateValue: newRating,
+          comment: newComment
+        })
+      }
+
+      // Atualizar o estado local do userData com a nova avaliação
+      setUserData(prevData => {
+        if (!prevData?.ratedList) return prevData
+
+        const updatedRatedList = prevData.ratedList.map(rated => {
+          if (rated.movie.id === movieId) {
+            return {
+              ...rated,
+              rate: newRating,
+              comment: newComment,
+              id: rated.id,
+              movie: rated.movie
+            }
           }
+          return rated
+        })
+
+        return {
+          ...prevData,
+          ratedList: updatedRatedList
         }
-        return rated
       })
 
-      return {
-        ...prevData,
-        ratedList: updatedRatedList
-      }
-    })
-
-    // Atualizar o filme aberto no modal se necessário
-    setFilmeAberto(prev => {
-      if (prev && prev.id === movieId) {
-        return {
-          ...prev,
-          userRating: {
-            ...prev.userRating!,
-            rate: newRating,
-            comment: newComment
+      // Atualizar o filme aberto no modal se necessário
+      setFilmeAberto(prev => {
+        if (prev && prev.id === movieId && prev.userRating?.id) {
+          return {
+            ...prev,
+            userRating: {
+              id: prev.userRating.id,
+              rate: newRating,
+              comment: newComment
+            }
           }
         }
-      }
-      return prev
-    })
+        return prev
+      })
+
+      // Forçar uma re-renderização do componente
+      setAbaAtual(prevTab => prevTab)
+    } catch (error) {
+      console.error('Erro ao atualizar avaliação:', error)
+    }
   }
 
   // Função para encontrar o filme detalhado pelo ID

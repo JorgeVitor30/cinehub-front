@@ -374,7 +374,7 @@ export default function FilmeModal({ filme, aberto, onClose, isFavorited = false
                           <Button 
                             size="sm" 
                             onClick={() => {
-                              setEditandoAnotacao(false)
+                              salvarAnotacao()
                             }}
                             className="bg-amber-500 hover:bg-amber-600 text-black"
                           >
