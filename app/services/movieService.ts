@@ -138,5 +138,33 @@ export const movieService = {
       console.error('Erro ao buscar filmes:', error)
       throw error
     }
+  },
+
+  async uploadMoviePhotos(movieId: string, posterPhoto: File, backPhoto: File): Promise<void> {
+    try {
+      const token = document.cookie
+        .split('; ')
+        .find(row => row.startsWith('auth_token='))
+        ?.split('=')[1]
+
+      const formData = new FormData()
+      formData.append('PosterPhoto', posterPhoto)
+      formData.append('BackPhoto', backPhoto)
+
+      const response = await fetch(`${API_BASE_URL}/movies/${movieId}/photo`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token ?? ''}`,
+        },
+        body: formData
+      })
+
+      if (!response.ok) {
+        throw new Error('Falha ao fazer upload das fotos')
+      }
+    } catch (error) {
+      console.error('Erro ao fazer upload das fotos:', error)
+      throw error
+    }
   }
 }

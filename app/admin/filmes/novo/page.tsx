@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { ArrowLeft, Plus, X, Upload, Loader2, Save, Film, Clock, Calendar, DollarSign, Globe, Tag } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -14,6 +14,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import Link from "next/link"
 import { Switch } from "@/components/ui/switch"
+import { movieService } from "@/app/services/movieService"
 
 // Enum temporário de gêneros - substituir pelo seu enum quando criar
 const GENRES = [
@@ -61,6 +62,10 @@ export default function NovoFilmePage() {
   const [keywords, setKeywords] = useState<string[]>([])
   const [novaProducao, setNovaProducao] = useState("")
   const [producoes, setProducoes] = useState<string[]>([])
+  const [posterFile, setPosterFile] = useState<File | null>(null)
+  const [backFile, setBackFile] = useState<File | null>(null)
+  const [posterPreview, setPosterPreview] = useState<string>("")
+  const [backPreview, setBackPreview] = useState<string>("")
   const [filme, setFilme] = useState<NovoFilme>({
     title: "",
     overview: "",
@@ -149,16 +154,40 @@ export default function NovoFilmePage() {
     handleChange("budget", parseInt(value) || 0)
   }
 
+  // Handler para arquivos de imagem
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>, type: 'poster' | 'back') => {
+    const file = e.target.files?.[0]
+    if (file) {
+      if (type === 'poster') {
+        setPosterFile(file)
+        setPosterPreview(URL.createObjectURL(file))
+      } else {
+        setBackFile(file)
+        setBackPreview(URL.createObjectURL(file))
+      }
+    }
+  }
+
+  // Limpar URLs de preview quando componente for desmontado
+  useEffect(() => {
+    return () => {
+      if (posterPreview) URL.revokeObjectURL(posterPreview)
+      if (backPreview) URL.revokeObjectURL(backPreview)
+    }
+  }, [posterPreview, backPreview])
+
   // Função para salvar o filme
   const salvarFilme = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
 
     try {
+      // 1. Criar o filme primeiro
       const response = await fetch('http://localhost:5129/api/movies', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${document.cookie.split('; ').find(row => row.startsWith('auth_token='))?.split('=')[1] ?? ''}`
         },
         body: JSON.stringify(filme)
       })
@@ -167,6 +196,20 @@ export default function NovoFilmePage() {
         throw new Error('Erro ao criar filme')
       }
 
+      const filmeCreated = await response.json()
+
+      // 2. Se tiver arquivos de imagem, fazer o upload
+      if (posterFile && backFile) {
+        try {
+          await movieService.uploadMoviePhotos(filmeCreated.id, posterFile, backFile)
+          console.log('Fotos do filme enviadas com sucesso!')
+        } catch (error) {
+          console.error("Erro ao fazer upload das fotos:", error)
+          // Não vamos impedir a navegação se o upload falhar
+        }
+      }
+
+      // 3. Redirecionar após tudo concluído
       router.push("/admin/filmes")
     } catch (error) {
       console.error("Erro ao salvar filme:", error)
@@ -219,6 +262,12 @@ export default function NovoFilmePage() {
                         className="data-[state=active]:bg-amber-500 data-[state=active]:text-black"
                       >
                         Detalhes Adicionais
+                      </TabsTrigger>
+                      <TabsTrigger
+                        value="midia"
+                        className="data-[state=active]:bg-amber-500 data-[state=active]:text-black"
+                      >
+                        Mídia
                       </TabsTrigger>
                     </TabsList>
 
@@ -430,6 +479,109 @@ export default function NovoFilmePage() {
                             <Plus className="h-4 w-4" />
                           </Button>
                         </div>
+                      </div>
+                    </TabsContent>
+
+                    {/* Aba de Mídia */}
+                    <TabsContent value="midia" className="space-y-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* Upload do Pôster */}
+                        <Card className="bg-zinc-800 border-zinc-700">
+                          <CardContent className="p-6">
+                            <div className="space-y-4">
+                              <div className="flex items-center justify-between">
+                                <h3 className="text-lg font-semibold">Pôster do Filme</h3>
+                              </div>
+                              <div className="border-2 border-dashed border-zinc-700 rounded-lg p-6 text-center">
+                                {posterPreview ? (
+                                  <div className="relative aspect-[2/3] w-full max-w-[200px] mx-auto">
+                                    <img
+                                      src={posterPreview}
+                                      alt="Preview do pôster"
+                                      className="rounded-lg object-cover w-full h-full"
+                                    />
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="absolute top-2 right-2 bg-black/50 hover:bg-black/70"
+                                      onClick={() => {
+                                        setPosterFile(null)
+                                        setPosterPreview("")
+                                      }}
+                                    >
+                                      <X className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                ) : (
+                                  <div className="py-4">
+                                    <Upload className="h-8 w-8 mx-auto mb-2 text-zinc-500" />
+                                    <Label htmlFor="poster" className="cursor-pointer">
+                                      <span className="text-sm text-zinc-400">
+                                        Clique para fazer upload do pôster
+                                      </span>
+                                      <Input
+                                        id="poster"
+                                        type="file"
+                                        accept="image/*"
+                                        className="hidden"
+                                        onChange={(e) => handleImageChange(e, 'poster')}
+                                      />
+                                    </Label>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+
+                        {/* Upload do Banner */}
+                        <Card className="bg-zinc-800 border-zinc-700">
+                          <CardContent className="p-6">
+                            <div className="space-y-4">
+                              <div className="flex items-center justify-between">
+                                <h3 className="text-lg font-semibold">Banner do Filme</h3>
+                              </div>
+                              <div className="border-2 border-dashed border-zinc-700 rounded-lg p-6 text-center">
+                                {backPreview ? (
+                                  <div className="relative aspect-video w-full max-w-[400px] mx-auto">
+                                    <img
+                                      src={backPreview}
+                                      alt="Preview do banner"
+                                      className="rounded-lg object-cover w-full h-full"
+                                    />
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="absolute top-2 right-2 bg-black/50 hover:bg-black/70"
+                                      onClick={() => {
+                                        setBackFile(null)
+                                        setBackPreview("")
+                                      }}
+                                    >
+                                      <X className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                ) : (
+                                  <div className="py-4">
+                                    <Upload className="h-8 w-8 mx-auto mb-2 text-zinc-500" />
+                                    <Label htmlFor="banner" className="cursor-pointer">
+                                      <span className="text-sm text-zinc-400">
+                                        Clique para fazer upload do banner
+                                      </span>
+                                      <Input
+                                        id="banner"
+                                        type="file"
+                                        accept="image/*"
+                                        className="hidden"
+                                        onChange={(e) => handleImageChange(e, 'back')}
+                                      />
+                                    </Label>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
                       </div>
                     </TabsContent>
                   </Tabs>
