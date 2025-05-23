@@ -84,7 +84,6 @@ export const movieService = {
       }
 
       const data = await response.json()
-      console.log('Dados recebidos da API:', data) // Log para debug
       return data
     } catch (error) {
       console.error('Erro no serviço de filmes:', error)
