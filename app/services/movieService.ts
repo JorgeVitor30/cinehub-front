@@ -2,12 +2,9 @@ const API_BASE_URL = 'http://localhost:5129/api'
 
 export interface MovieResponse {
   content: Movie[]
-  totalElements: number
-  totalPages: number
+  total: number
+  currentPage: number
   size: number
-  number: number
-  first: boolean
-  last: boolean
 }
 
 export interface Movie {

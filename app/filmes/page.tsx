@@ -38,7 +38,7 @@ export default function FilmesPage() {
   const [generosSelecionados, setGenerosSelecionados] = useState<string[]>([])
   const [avaliacaoMinima, setAvaliacaoMinima] = useState(0)
   const [anoInicio, setAnoInicio] = useState(1970)
-  const [anoFim, setAnoFim] = useState(2024)
+  const [anoFim, setAnoFim] = useState(2030)
   const [ordenarPor, setOrdenarPor] = useState<"recentes" | "avaliacao" | "titulo">("recentes")
   const [totalItems, setTotalItems] = useState(0)
   const ITEMS_POR_PAGINA = 20
@@ -128,7 +128,9 @@ export default function FilmesPage() {
           notaMinima
         )
         
+        console.log('Resposta da API:', response)
         setFilmes(response.content || [])
+        console.log('Filmes após setFilmes:', response.content)
         setTotalItems(response.total || 0)
       } catch (err) {
         console.error("Erro ao carregar filmes:", err)
@@ -170,27 +172,55 @@ export default function FilmesPage() {
 
   useEffect(() => {
     let resultado = [...filmes]
+    console.log('1. Filmes iniciais:', resultado)
+    
     if (termoBusca) {
       resultado = resultado.filter(filme => 
         filme.title?.toLowerCase().includes(termoBusca.toLowerCase()) || 
         filme.overview?.toLowerCase().includes(termoBusca.toLowerCase())
       )
+      console.log('2. Após filtro de termo de busca:', resultado)
     }
 
     if (generosSelecionados.length > 0) {
       resultado = resultado.filter(filme =>
         generosSelecionados.some(genero => filme.genres?.includes(genero))
       )
+      console.log('3. Após filtro de gêneros:', resultado)
     }
 
     if (avaliacaoMinima > 0) {
       resultado = resultado.filter(filme => filme.voteAverage >= avaliacaoMinima)
+      console.log('4. Após filtro de avaliação mínima:', resultado, 'Avaliação mínima:', avaliacaoMinima)
     }
+
+    // Log detalhado para cada filme antes do filtro de ano
+    console.log('Filmes antes do filtro de ano:', resultado.map(filme => ({
+      titulo: filme.title,
+      dataOriginal: filme.releaseDate,
+      ano: new Date(filme.releaseDate).getFullYear()
+    })))
 
     resultado = resultado.filter(filme => {
       const ano = new Date(filme.releaseDate).getFullYear()
-      return ano >= anoInicio && ano <= anoFim
+      const dentroDoIntervalo = ano >= anoInicio && ano <= anoFim
+      console.log(
+        'Verificando filme:', filme.title,
+        '\nData original:', filme.releaseDate,
+        '\nAno extraído:', ano,
+        '\nIntervalo permitido:', anoInicio, '-', anoFim,
+        '\nDentro do intervalo:', dentroDoIntervalo
+      )
+      return dentroDoIntervalo
     })
+    console.log('5. Após filtro de ano:', resultado)
+
+    // Log detalhado antes da ordenação
+    console.log('Antes da ordenação:', resultado.map(filme => ({
+      titulo: filme.title,
+      data: filme.releaseDate,
+      avaliacao: filme.voteAverage
+    })))
 
     switch (ordenarPor) {
       case "recentes":
@@ -203,6 +233,7 @@ export default function FilmesPage() {
         resultado.sort((a, b) => a.title.localeCompare(b.title))
         break
     }
+    console.log('6. Após ordenação:', resultado)
 
     setFilmesFiltrados(resultado)
   }, [termoBusca, generosSelecionados, avaliacaoMinima, anoInicio, anoFim, ordenarPor, filmes])
