@@ -28,6 +28,20 @@ export interface Movie {
   genres: string
 }
 
+export interface NovoFilme {
+  title: string
+  overview: string
+  releaseDate: string
+  runTime: number
+  adult: boolean
+  budget: number
+  originalLanguage: string
+  tagline: string
+  keyWords: string
+  productions: string
+  genres: string
+}
+
 export const movieService = {
   async addFavorite(userId: string, movieId: string): Promise<void> {
     const token = document.cookie
@@ -166,5 +180,27 @@ export const movieService = {
       console.error('Erro ao fazer upload das fotos:', error)
       throw error
     }
+  },
+
+  async createMovie(movie: NovoFilme): Promise<Movie> {
+    const token = document.cookie
+      .split('; ')
+      .find(row => row.startsWith('auth_token='))
+      ?.split('=')[1]
+
+    const response = await fetch(`${API_BASE_URL}/movies`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token ?? ''}`
+      },
+      body: JSON.stringify(movie)
+    })
+
+    if (!response.ok) {
+      throw new Error('Erro ao criar filme')
+    }
+
+    return response.json()
   }
 }

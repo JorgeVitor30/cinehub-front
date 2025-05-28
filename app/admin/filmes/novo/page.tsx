@@ -183,20 +183,7 @@ export default function NovoFilmePage() {
 
     try {
       // 1. Criar o filme primeiro
-      const response = await fetch('http://localhost:5129/api/movies', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${document.cookie.split('; ').find(row => row.startsWith('auth_token='))?.split('=')[1] ?? ''}`
-        },
-        body: JSON.stringify(filme)
-      })
-
-      if (!response.ok) {
-        throw new Error('Erro ao criar filme')
-      }
-
-      const filmeCreated = await response.json()
+      const filmeCreated = await movieService.createMovie(filme)
 
       // 2. Se tiver arquivos de imagem, fazer o upload
       if (posterFile && backFile) {
