@@ -356,13 +356,13 @@ export default function NovoFilmePage() {
                             <SelectValue placeholder="Selecione o idioma" />
                           </SelectTrigger>
                           <SelectContent className="bg-zinc-800 border-zinc-700 text-white">
-                            <SelectItem value="pt-BR">Português</SelectItem>
-                            <SelectItem value="en-US">Inglês</SelectItem>
-                            <SelectItem value="es">Espanhol</SelectItem>
-                            <SelectItem value="fr">Francês</SelectItem>
-                            <SelectItem value="de">Alemão</SelectItem>
-                            <SelectItem value="ja">Japonês</SelectItem>
-                            <SelectItem value="ko">Coreano</SelectItem>
+                            <SelectItem value="pt">Português</SelectItem>
+                            <SelectItem value="en">English</SelectItem>
+                            <SelectItem value="es">Español</SelectItem>
+                            <SelectItem value="fr">Français</SelectItem>
+                            <SelectItem value="de">Deutsch</SelectItem>
+                            <SelectItem value="ja">日本語</SelectItem>
+                            <SelectItem value="ko">한국어</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
