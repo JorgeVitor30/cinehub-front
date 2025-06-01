@@ -12,16 +12,16 @@ export interface Movie {
   title: string
   overview: string
   voteCount: number
-  voteAverage: number
+  voteAverage: number | { source: string, parsedValue: number }
   releaseDate: string
-  revenue: number
+  revenue: number | { source: string, parsedValue: number }
   runTime: number
   adult: boolean
-  budget: number
+  budget: number | { source: string, parsedValue: number }
   posterPhotoUrl: string
   backPhotoUrl: string
   originalLanguage: string
-  popularity: number
+  popularity: number | { source: string, parsedValue: number }
   tagline: string
   keyWords: string
   productions: string
@@ -40,6 +40,11 @@ export interface NovoFilme {
   keyWords: string
   productions: string
   genres: string
+}
+
+export const extractValue = (value: number | { source: string, parsedValue: number }): number => {
+  if (typeof value === 'number') return value
+  return value.parsedValue
 }
 
 export const movieService = {
@@ -98,7 +103,18 @@ export const movieService = {
       }
 
       const data = await response.json()
-      return data
+      
+      // Mapear os filmes para garantir que os valores numéricos estejam corretos
+      return {
+        ...data,
+        content: data.content.map((movie: Movie) => ({
+          ...movie,
+          voteAverage: extractValue(movie.voteAverage),
+          revenue: extractValue(movie.revenue),
+          budget: extractValue(movie.budget),
+          popularity: extractValue(movie.popularity)
+        }))
+      }
     } catch (error) {
       console.error('Erro no serviço de filmes:', error)
       throw error
@@ -110,7 +126,8 @@ export const movieService = {
     size: number = 20, 
     title: string = '',
     genre: string = '',
-    note: number = 0
+    note: number = 0,
+    sortBy: string = ''
   ): Promise<MovieResponse> {
     try {
       const params = new URLSearchParams({
@@ -120,6 +137,10 @@ export const movieService = {
       
       if (title) {
         params.append('title', title)
+      } else {
+        if (sortBy) {
+          params.append('sortBy', sortBy)
+        }
       }
       
       if (genre) {
@@ -147,7 +168,18 @@ export const movieService = {
       }
 
       const data = await response.json()
-      return data
+      
+      // Mapear os filmes para garantir que os valores numéricos estejam corretos
+      return {
+        ...data,
+        content: data.content.map((movie: Movie) => ({
+          ...movie,
+          voteAverage: extractValue(movie.voteAverage),
+          revenue: extractValue(movie.revenue),
+          budget: extractValue(movie.budget),
+          popularity: extractValue(movie.popularity)
+        }))
+      }
     } catch (error) {
       console.error('Erro ao buscar filmes:', error)
       throw error

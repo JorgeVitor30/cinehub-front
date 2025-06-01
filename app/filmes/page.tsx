@@ -14,7 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Slider } from "@/components/ui/slider"
-import { movieService, type Movie } from "@/app/services/movieService"
+import { movieService, type Movie, extractValue } from "@/app/services/movieService"
 import React from "react"
 import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 import debounce from 'lodash/debounce'
@@ -27,6 +27,7 @@ export default function FilmesPage() {
   
   const pageParam = searchParams.get('page')
   const searchParam = searchParams.get('title') || ""
+  const sortByParam = searchParams.get('sortBy')
   
   const [paginaAtual, setPaginaAtual] = useState(pageParam ? Number(pageParam) : 1)
   const [termoBusca, setTermoBusca] = useState(searchParam)
@@ -39,7 +40,16 @@ export default function FilmesPage() {
   const [avaliacaoMinima, setAvaliacaoMinima] = useState(0)
   const [anoInicio, setAnoInicio] = useState(1970)
   const [anoFim, setAnoFim] = useState(2030)
-  const [ordenarPor, setOrdenarPor] = useState<"recentes" | "avaliacao" | "titulo">("recentes")
+  const [ordenarPor, setOrdenarPor] = useState<"recentes" | "avaliacao" | "titulo">(() => {
+    switch (sortByParam) {
+      case "voteaverage":
+        return "avaliacao"
+      case "title":
+        return "titulo"
+      default:
+        return "recentes"
+    }
+  })
   const [totalItems, setTotalItems] = useState(0)
   const ITEMS_POR_PAGINA = 20
   const [generoSelecionado, setGeneroSelecionado] = useState<string>("")
@@ -50,7 +60,11 @@ export default function FilmesPage() {
   const debouncedSearch = useCallback(
     debounce((valor: string) => {
       setTermoBusca(valor)
-      atualizarParametros(undefined, valor)
+      if (valor) {
+        atualizarParametros(undefined, valor, undefined, undefined, "")
+      } else {
+        atualizarParametros(undefined, valor, undefined, undefined, "releasedate")
+      }
     }, 500),
     []
   )
@@ -65,6 +79,9 @@ export default function FilmesPage() {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const valor = e.target.value
     setValorInput(valor)
+    if (valor) {
+      setOrdenarPor("recentes")
+    }
     debouncedSearch(valor)
   }
 
@@ -73,7 +90,7 @@ export default function FilmesPage() {
     debouncedNoteChange(value[0])
   }
 
-  const atualizarParametros = (novaPagina?: number, novoTermo?: string, novoGenero?: string, novaNota?: number) => {
+  const atualizarParametros = (novaPagina?: number, novoTermo?: string, novoGenero?: string, novaNota?: number, novaOrdenacao?: string) => {
     const params = new URLSearchParams(searchParams.toString())
     
     if (novaPagina !== undefined) {
@@ -106,6 +123,15 @@ export default function FilmesPage() {
       }
       params.set('page', '1')
     }
+
+    if (novaOrdenacao !== undefined) {
+      if (novaOrdenacao) {
+        params.set('sortBy', novaOrdenacao)
+      } else {
+        params.delete('sortBy')
+      }
+      params.set('page', '1')
+    }
     
     router.push(`${pathname}?${params.toString()}`)
   }
@@ -120,12 +146,26 @@ export default function FilmesPage() {
     const fetchFilmes = async () => {
       try {
         setIsLoading(true)
+        let sortByValue = ''
+        switch (ordenarPor) {
+          case "recentes":
+            sortByValue = 'releasedate'
+            break
+          case "avaliacao":
+            sortByValue = 'voteaverage'
+            break
+          case "titulo":
+            sortByValue = 'title'
+            break
+        }
+
         const response = await movieService.getAllMoviesPage(
           paginaAtual, 
           ITEMS_POR_PAGINA,
           termoBusca,
           generoSelecionado,
-          notaMinima
+          notaMinima,
+          sortByValue
         )
         
         setFilmes(response.content || [])
@@ -141,7 +181,7 @@ export default function FilmesPage() {
     }
 
     fetchFilmes()
-  }, [paginaAtual, termoBusca, generoSelecionado, notaMinima])
+  }, [paginaAtual, termoBusca, generoSelecionado, notaMinima, ordenarPor])
 
   useEffect(() => {
     if (inputRef.current) {
@@ -185,7 +225,7 @@ export default function FilmesPage() {
     }
 
     if (avaliacaoMinima > 0) {
-      resultado = resultado.filter(filme => filme.voteAverage >= avaliacaoMinima)
+      resultado = resultado.filter(filme => extractValue(filme.voteAverage) >= avaliacaoMinima)
     }
 
     resultado = resultado.filter(filme => {
@@ -194,20 +234,8 @@ export default function FilmesPage() {
       return dentroDoIntervalo
     })
 
-    switch (ordenarPor) {
-      case "recentes":
-        resultado.sort((a, b) => new Date(b.releaseDate).getTime() - new Date(a.releaseDate).getTime())
-        break
-      case "avaliacao":
-        resultado.sort((a, b) => b.voteAverage - a.voteAverage)
-        break
-      case "titulo":
-        resultado.sort((a, b) => a.title.localeCompare(b.title))
-        break
-    }
-
     setFilmesFiltrados(resultado)
-  }, [termoBusca, generosSelecionados, avaliacaoMinima, anoInicio, anoFim, ordenarPor, filmes])
+  }, [termoBusca, generosSelecionados, avaliacaoMinima, anoInicio, anoFim, filmes])
 
   const totalPaginas = Math.ceil(totalItems / ITEMS_POR_PAGINA) || 1
 
@@ -229,7 +257,7 @@ export default function FilmesPage() {
     setGeneroSelecionado("")
     setNotaMinima(0)
     setOrdenarPor("recentes")
-    atualizarParametros(1, "", "", 0) // Reseta página para 1 e limpa todos os filtros
+    atualizarParametros(1, "", "", 0, "") // Reseta página para 1 e limpa todos os filtros
   }
 
   if (isLoading) {
@@ -272,12 +300,12 @@ export default function FilmesPage() {
       capa: filme.posterPhotoUrl,
       banner: filme.backPhotoUrl,
       descricao: filme.overview,
-      avaliacao: filme.voteAverage,
+      avaliacao: extractValue(filme.voteAverage),
       duracao: `${Math.floor(filme.runTime / 60)}h ${filme.runTime % 60}m`,
       ano: new Date(filme.releaseDate).getFullYear(),
       generos: filme.genres.split(", "),
       lingua: filme.originalLanguage,
-      orcamento: filme.budget > 0 ? `$${filme.budget.toLocaleString()}` : "Não informado",
+      orcamento: extractValue(filme.budget) > 0 ? `$${extractValue(filme.budget).toLocaleString()}` : "Não informado",
       producoes: filme.productions.split(", ").map(nome => ({ nome })),
       keywords: filme.keyWords.split(", ")
     }
@@ -341,19 +369,28 @@ export default function FilmesPage() {
               <DropdownMenuContent className="bg-zinc-900 border-zinc-700 w-[180px]">
                 <DropdownMenuItem
                   className="text-white hover:bg-zinc-800"
-                  onClick={() => setOrdenarPor("recentes")}
+                  onClick={() => {
+                    setOrdenarPor("recentes")
+                    atualizarParametros(undefined, undefined, undefined, undefined, "releasedate")
+                  }}
                 >
                   Mais recentes
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className="text-white hover:bg-zinc-800"
-                  onClick={() => setOrdenarPor("avaliacao")}
+                  onClick={() => {
+                    setOrdenarPor("avaliacao")
+                    atualizarParametros(undefined, undefined, undefined, undefined, "voteaverage")
+                  }}
                 >
                   Melhor avaliados
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className="text-white hover:bg-zinc-800"
-                  onClick={() => setOrdenarPor("titulo")}
+                  onClick={() => {
+                    setOrdenarPor("titulo")
+                    atualizarParametros(undefined, undefined, undefined, undefined, "title")
+                  }}
                 >
                   Título (A-Z)
                 </DropdownMenuItem>
