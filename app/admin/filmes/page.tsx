@@ -29,7 +29,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import FilmeModal, { type FilmeDetalhado } from "@/components/filme-modal"
 import EditarFilmeModal from "@/components/admin/editar-filme-modal"
-import { movieService, type Movie } from "@/app/services/movieService"
+import { movieService, type Movie, extractValue } from "@/app/services/movieService"
 import debounce from 'lodash/debounce'
 
 export default function AdminFilmesPage() {
@@ -134,14 +134,15 @@ export default function AdminFilmesPage() {
       capa: filme.posterPhotoUrl,
       banner: filme.backPhotoUrl,
       descricao: filme.overview,
-      avaliacao: filme.voteAverage,
+      avaliacao: extractValue(filme.voteAverage),
       duracao: `${Math.floor(filme.runTime / 60)}h ${filme.runTime % 60}m`,
       ano: new Date(filme.releaseDate).getFullYear(),
       generos: filme.genres.split(", "),
       lingua: filme.originalLanguage,
-      orcamento: filme.budget > 0 ? `$${filme.budget.toLocaleString()}` : "Não informado",
+      orcamento: extractValue(filme.budget) > 0 ? `$${extractValue(filme.budget).toLocaleString()}` : "Não informado",
       producoes: filme.productions.split(", ").map(nome => ({ nome })),
-      keywords: filme.keyWords.split(", ")
+      keywords: filme.keyWords.split(", "),
+      voteCount: extractValue(filme.voteCount)
     }
     return filmeDetalhado
   }

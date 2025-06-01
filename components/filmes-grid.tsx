@@ -88,7 +88,8 @@ export default function FilmesGrid({ categoria }: FilmesGridProps) {
       lingua: filme.originalLanguage,
       orcamento: extractValue(filme.budget) > 0 ? `$${extractValue(filme.budget).toLocaleString()}` : "Não informado",
       producoes: filme.productions.split(", ").map(nome => ({ nome })),
-      keywords: filme.keyWords.split(", ")
+      keywords: filme.keyWords.split(", "),
+      voteCount: filme.voteCount
     }
     setFilmeAberto(filmeDetalhado)
   }

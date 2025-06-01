@@ -135,10 +135,11 @@ const mapMovieToFilmeDetalhado = (movie: Movie, userRating?: { id?: string, rate
     descricao: movie.overview,
     producoes: movie.productions.split(',').map(p => ({ nome: p.trim() })),
     userRating: userRating && userRating.id ? {
-      id: userRating.id, // Usar o ID da avaliação (ratedList.id)
+      id: userRating.id,
       rate: userRating.rate,
       comment: userRating.comment
-    } : undefined
+    } : undefined,
+    voteCount: movie.voteCount
   }
 }
 

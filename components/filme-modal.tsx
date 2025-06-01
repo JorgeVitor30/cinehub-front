@@ -39,6 +39,7 @@ export interface FilmeDetalhado {
     rate: number
     comment: string
   }
+  voteCount: number
 }
 
 interface FilmeModalProps {
@@ -299,6 +300,7 @@ export default function FilmeModal({ filme, aberto, onClose, isFavorited = false
                 <div className="flex items-center text-amber-500">
                   <Star className="h-4 w-4 mr-1 fill-amber-500" />
                   <span>{filme.avaliacao.toFixed(1)}/10</span>
+                  <span className="text-zinc-400 ml-1">({filme.voteCount.toLocaleString()} votos)</span>
                 </div>
                 <div className="flex items-center">
                   <DollarSign className="h-4 w-4 mr-1" />
@@ -485,6 +487,34 @@ export default function FilmeModal({ filme, aberto, onClose, isFavorited = false
                     )}
                   </Button>
 
+                  {/* Estatísticas do Filme */}
+                  <div className="bg-zinc-800/50 rounded-lg p-4 space-y-4">                   
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-zinc-400">Avaliação</span>
+                        <div className="flex items-center gap-1">
+                          <Star className="h-4 w-4 text-amber-500 fill-amber-500" />
+                          <span className="font-medium">{filme.avaliacao.toFixed(1)}/10</span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <span className="text-zinc-400">Total de votos</span>
+                        <span className="font-medium">{filme.voteCount.toLocaleString()}</span>
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <span className="text-zinc-400">Idioma original</span>
+                        <span className="font-medium uppercase">{filme.lingua}</span>
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <span className="text-zinc-400">Orçamento</span>
+                        <span className="font-medium">{filme.orcamento}</span>
+                      </div>
+                    </div>
+                  </div>
+
                   {/* Gêneros */}
                   {filme.generos && filme.generos.length > 0 && (
                     <div>
@@ -502,16 +532,6 @@ export default function FilmeModal({ filme, aberto, onClose, isFavorited = false
                     </div>
                   )}
                   
-                  {/* Avaliação */}
-                <div className="flex items-center gap-2 mt-4">
-                <Star className="w-5 h-5 text-yellow-400" />
-                <span className="text-base font-semibold text-white">
-                  <span className="text-yellow-400">{filme.avaliacao.toFixed(1)}</span>
-                  <span className="text-zinc-400"> / 10</span>
-                </span>
-              </div>
-
-
                   {/* Produtoras */}
                   {filme.producoes && filme.producoes.length > 0 && (
                     <div>
