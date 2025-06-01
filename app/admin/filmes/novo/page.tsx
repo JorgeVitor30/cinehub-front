@@ -18,25 +18,25 @@ import { movieService } from "@/app/services/movieService"
 
 // Enum temporário de gêneros - substituir pelo seu enum quando criar
 const GENRES = [
-  "Ação",
-  "Aventura",
-  "Animação",
-  "Comédia",
+  "Action",
+  "Adventure",
+  "Animation",
+  "Comedy",
   "Crime",
-  "Documentário",
+  "Documentary",
   "Drama",
-  "Família",
-  "Fantasia",
-  "História",
-  "Terror",
-  "Música",
-  "Mistério",
+  "Family",
+  "Fantasy",
+  "History",
+  "Horror",
+  "Music",
+  "Mystery",
   "Romance",
-  "Ficção Científica",
-  "Cinema TV",
+  "Science Fiction",
+  "TV Movie",
   "Thriller",
-  "Guerra",
-  "Faroeste"
+  "War",
+  "Western"
 ]
 
 interface NovoFilme {
