@@ -14,9 +14,9 @@ interface FilmeCardProps {
   avaliacao: number
   duracao: string
   ano: number
-  descricao?: string
-  className?: string
-  onClick?: () => void
+  descricao: string
+  onClick: () => void
+  children?: React.ReactNode
 }
 
 const favoritarAPI = async (filmeId: string, favoritar: boolean): Promise<{ success: boolean }> => {
@@ -43,8 +43,8 @@ export default function FilmeCard({
   duracao,
   ano,
   descricao,
-  className,
   onClick,
+  children,
 }: FilmeCardProps) {
   const [favorito, setFavorito] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
@@ -75,7 +75,6 @@ export default function FilmeCard({
       onClick={onClick}
       className={cn(
         "group relative overflow-hidden rounded-lg transition-all hover:scale-105 hover:shadow-xl cursor-pointer",
-        className,
       )}
     >
       <div className="aspect-[2/3] w-full relative">

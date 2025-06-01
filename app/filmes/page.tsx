@@ -168,8 +168,14 @@ export default function FilmesPage() {
           sortByValue
         )
         
-        setFilmes(response.content || [])
-        setTotalItems(response.total || 0)
+        if (response && Array.isArray(response.content)) {
+          setFilmes(response.content)
+          setTotalItems(response.total || 0)
+        } else {
+          console.error("Resposta inválida da API:", response)
+          setFilmes([])
+          setTotalItems(0)
+        }
       } catch (err) {
         console.error("Erro ao carregar filmes:", err)
         setError(err instanceof Error ? err.message : "Erro ao carregar filmes")
@@ -482,7 +488,7 @@ export default function FilmesPage() {
                     id={filme.id}
                     titulo={filme.title}
                     capa={filme.posterPhotoUrl}
-                    avaliacao={filme.voteAverage}
+                    avaliacao={extractValue(filme.voteAverage)}
                     duracao={`${Math.floor(filme.runTime / 60)}h ${filme.runTime % 60}m`}
                     ano={new Date(filme.releaseDate).getFullYear()}
                     descricao={filme.overview}

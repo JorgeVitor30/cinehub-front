@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import FilmeCard from "./filme-card"
 import FilmeModal, { type FilmeDetalhado } from "./filme-modal"
-import { movieService, type Movie } from "@/app/services/movieService"
+import { movieService, type Movie, extractValue } from "@/app/services/movieService"
 import Image from "next/image"
 
 interface FilmesGridProps {
@@ -21,7 +21,6 @@ export default function FilmesGrid({ categoria }: FilmesGridProps) {
       try {
         setLoading(true)
         const data = await movieService.getHomeMovies()
-        console.log('Dados da categoria:', categoria, data) // Log para debug
 
         let filmesDaCategoria: Movie[] = []
         switch (categoria) {
@@ -36,7 +35,6 @@ export default function FilmesGrid({ categoria }: FilmesGridProps) {
             break
         }
 
-        console.log('Filmes filtrados:', filmesDaCategoria) // Log para debug
         setFilmes(filmesDaCategoria)
       } catch (err) {
         console.error("Erro detalhado:", err)
@@ -76,6 +74,25 @@ export default function FilmesGrid({ categoria }: FilmesGridProps) {
     )
   }
 
+  const handleOpenFilme = (filme: Movie) => {
+    const filmeDetalhado: FilmeDetalhado = {
+      id: filme.id,
+      titulo: filme.title,
+      capa: filme.posterPhotoUrl,
+      banner: filme.backPhotoUrl,
+      descricao: filme.overview,
+      avaliacao: extractValue(filme.voteAverage),
+      duracao: `${Math.floor(filme.runTime / 60)}h ${filme.runTime % 60}m`,
+      ano: new Date(filme.releaseDate).getFullYear(),
+      generos: filme.genres.split(", "),
+      lingua: filme.originalLanguage,
+      orcamento: extractValue(filme.budget) > 0 ? `$${extractValue(filme.budget).toLocaleString()}` : "Não informado",
+      producoes: filme.productions.split(", ").map(nome => ({ nome })),
+      keywords: filme.keyWords.split(", ")
+    }
+    setFilmeAberto(filmeDetalhado)
+  }
+
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
       {filmes.map((filme) => (
@@ -84,32 +101,15 @@ export default function FilmesGrid({ categoria }: FilmesGridProps) {
           id={filme.id}
           titulo={filme.title}
           capa={filme.posterPhotoUrl}
-          avaliacao={filme.voteAverage}
+          avaliacao={extractValue(filme.voteAverage)}
           duracao={`${Math.floor(filme.runTime / 60)}h ${filme.runTime % 60}m`}
           ano={new Date(filme.releaseDate).getFullYear()}
           descricao={filme.overview}
-          onClick={() => {
-            const filmeDetalhado: FilmeDetalhado = {
-              id: filme.id,
-              titulo: filme.title,
-              capa: filme.posterPhotoUrl,
-              banner: filme.backPhotoUrl,
-              descricao: filme.overview,
-              avaliacao: filme.voteAverage,
-              duracao: `${Math.floor(filme.runTime / 60)}h ${filme.runTime % 60}m`,
-              ano: new Date(filme.releaseDate).getFullYear(),
-              generos: filme.genres.split(", "),
-              lingua: filme.originalLanguage,
-              orcamento: filme.budget > 0 ? `$${filme.budget.toLocaleString()}` : "Não informado",
-              producoes: filme.productions.split(", ").map(nome => ({ nome })),
-              keywords: filme.keyWords.split(", ")
-            }
-            setFilmeAberto(filmeDetalhado)
-          }}
+          onClick={() => handleOpenFilme(filme)}
         >
           <Image
-            src={filme.capa || "/placeholder.svg"}
-            alt={filme.titulo}
+            src={filme.posterPhotoUrl || "/placeholder.svg"}
+            alt={filme.title}
             onError={(e) => {
               e.currentTarget.src = "/placeholder.svg"
             }}

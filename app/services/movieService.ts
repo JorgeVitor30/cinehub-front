@@ -94,26 +94,43 @@ export const movieService = {
     }
   },
 
-  async getHomeMovies(): Promise<MovieResponse> {
+  async getHomeMovies(): Promise<{
+    popularMovies: Movie[],
+    newReleaseMovies: Movie[],
+    classicMovies: Movie[]
+  }> {
     try {
       const response = await fetch(`${API_BASE_URL}/movies/home`)
       
       if (!response.ok) {
-        throw new Error(`User not Authenticated! status: ${response.status}`)
+        throw new Error(`Erro na requisição: ${response.status}`)
       }
 
       const data = await response.json()
-      
-      // Mapear os filmes para garantir que os valores numéricos estejam corretos
+
+      // Mapear os valores numéricos em cada categoria
       return {
-        ...data,
-        content: data.content.map((movie: Movie) => ({
+        popularMovies: data.popularMovies?.map((movie: Movie) => ({
           ...movie,
           voteAverage: extractValue(movie.voteAverage),
           revenue: extractValue(movie.revenue),
           budget: extractValue(movie.budget),
           popularity: extractValue(movie.popularity)
-        }))
+        })) || [],
+        newReleaseMovies: data.newReleaseMovies?.map((movie: Movie) => ({
+          ...movie,
+          voteAverage: extractValue(movie.voteAverage),
+          revenue: extractValue(movie.revenue),
+          budget: extractValue(movie.budget),
+          popularity: extractValue(movie.popularity)
+        })) || [],
+        classicMovies: data.classicMovies?.map((movie: Movie) => ({
+          ...movie,
+          voteAverage: extractValue(movie.voteAverage),
+          revenue: extractValue(movie.revenue),
+          budget: extractValue(movie.budget),
+          popularity: extractValue(movie.popularity)
+        })) || []
       }
     } catch (error) {
       console.error('Erro no serviço de filmes:', error)
@@ -164,21 +181,51 @@ export const movieService = {
       })
       
       if (!response.ok) {
-        throw new Error(`User not Authenticated! status: ${response.status}`)
+        throw new Error(`Erro na requisição: ${response.status}`)
       }
 
       const data = await response.json()
-      
-      // Mapear os filmes para garantir que os valores numéricos estejam corretos
+
+      // Se a resposta já vier no formato esperado com content
+      if (data && data.content) {
+        return {
+          ...data,
+          content: data.content.map((movie: Movie) => ({
+            ...movie,
+            voteAverage: extractValue(movie.voteAverage),
+            revenue: extractValue(movie.revenue),
+            budget: extractValue(movie.budget),
+            popularity: extractValue(movie.popularity)
+          }))
+        }
+      }
+
+      // Se a resposta vier com as categorias separadas
+      let content: Movie[] = []
+
+      if (Array.isArray(data)) {
+        content = data
+      } else if (data.popularMovies || data.newReleaseMovies || data.classicMovies) {
+        if (data.popularMovies) content = [...content, ...data.popularMovies]
+        if (data.newReleaseMovies) content = [...content, ...data.newReleaseMovies]
+        if (data.classicMovies) content = [...content, ...data.classicMovies]
+      } else {
+        content = []
+      }
+
+      const total = content.length
+
       return {
-        ...data,
-        content: data.content.map((movie: Movie) => ({
+        content: content.map((movie: Movie) => ({
           ...movie,
           voteAverage: extractValue(movie.voteAverage),
           revenue: extractValue(movie.revenue),
           budget: extractValue(movie.budget),
           popularity: extractValue(movie.popularity)
-        }))
+        })),
+        total,
+        currentPage: page,
+        size
       }
     } catch (error) {
       console.error('Erro ao buscar filmes:', error)
