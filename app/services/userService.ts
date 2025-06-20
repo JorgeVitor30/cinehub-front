@@ -47,6 +47,10 @@ export interface User {
       avaliacoesNecessarias: number
     }
   }
+  rankingUser?: {
+    currentRank: number
+    totalUsers: number
+  }
   totalFilmes?: number
   filmesAssistidosPorGenero?: {
     genero: string

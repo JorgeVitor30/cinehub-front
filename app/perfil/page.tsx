@@ -121,12 +121,18 @@ const filmesRecomendadosMock = [
 
 // Função para mapear os filmes da API para o formato esperado pelo componente
 const mapMovieToFilmeDetalhado = (movie: Movie, userRating?: { id?: string, rate: number, comment: string }): FilmeDetalhado => {
+  // Função auxiliar para extrair valor numérico
+  const extractNumericValue = (value: number | { source: string; parsedValue: number }): number => {
+    if (typeof value === 'number') return value
+    return value.parsedValue
+  }
+
   return {
     id: movie.id,
     titulo: movie.title,
     capa: movie.posterPhotoUrl,
     banner: movie.backPhotoUrl,
-    avaliacao: movie.voteAverage,
+    avaliacao: extractNumericValue(movie.voteAverage),
     duracao: `${Math.floor(movie.runTime / 60)}h ${movie.runTime % 60}m`,
     ano: new Date(movie.releaseDate).getFullYear(),
     generos: movie.genres.split(',').map(g => g.trim()),
@@ -370,9 +376,9 @@ export default function PerfilPage() {
               <CardContent>
                 <div className="flex flex-col items-center mb-4">
                   <div className="bg-gradient-to-r from-amber-500 to-red-600 text-white text-2xl font-bold rounded-full w-16 h-16 flex items-center justify-center mb-2">
-                    {userData.ranking?.posicao || '-'}
+                    {userData.rankingUser?.currentRank || '-'}
                   </div>
-                  <p className="text-sm text-zinc-400">de {userData.ranking?.total || 0} usuários</p>
+                  <p className="text-sm text-zinc-400">de {userData.rankingUser?.totalUsers || 0} usuários</p>
                 </div>
 
                 <div className="space-y-4">
@@ -581,7 +587,14 @@ export default function PerfilPage() {
                               <div className="flex items-center gap-4 mt-1">
                                 <div className="flex items-center">
                                   <Star className="h-4 w-4 text-amber-500 fill-amber-500 mr-1" />
-                                  <span className="text-sm font-medium">{rated.movie.voteAverage.toFixed(1)}</span>
+                                  <span className="text-sm font-medium">
+                                    {(() => {
+                                      const value = typeof rated.movie.voteAverage === 'number' 
+                                        ? rated.movie.voteAverage 
+                                        : rated.movie.voteAverage.parsedValue
+                                      return value.toFixed(1)
+                                    })()}
+                                  </span>
                                   <span className="text-xs text-zinc-500 ml-1">global</span>
                                 </div>
                                 <div className="flex items-center">
