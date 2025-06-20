@@ -126,6 +126,44 @@ class RateService {
       throw error
     }
   }
+
+  async deleteRate(movieId: string, userId: string): Promise<void> {
+    const token = document.cookie
+      .split('; ')
+      .find(row => row.startsWith('auth_token='))
+      ?.split('=')[1]
+
+    if (!token) {
+      throw new Error('Token de autenticação não encontrado')
+    }
+
+    try {
+      const response = await fetch(`${this.baseUrl}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          movieId: movieId,
+          userId: userId
+        }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null)
+        console.error('Resposta da API:', {
+          status: response.status,
+          statusText: response.statusText,
+          errorData
+        })
+        throw new Error(`Falha ao deletar avaliação: ${response.status} ${response.statusText}`)
+      }
+    } catch (error) {
+      console.error('Erro detalhado ao deletar avaliação:', error)
+      throw error
+    }
+  }
 }
 
 export const rateService = new RateService()

@@ -40,7 +40,7 @@ export default function UsuarioCard({ usuario, onClick }: UsuarioCardProps) {
       <div className="p-5">
         <div className="flex items-center gap-4 mb-4">
           <Avatar className="h-16 w-16 border-2 border-amber-500">
-            <AvatarImage src={usuario.avatar} alt={usuario.nome} />
+            <AvatarImage src={usuario.avatar || undefined} alt={usuario.nome} />
             <AvatarFallback className="bg-zinc-700 text-lg">{usuario.nome.charAt(0)}</AvatarFallback>
           </Avatar>
           <div>

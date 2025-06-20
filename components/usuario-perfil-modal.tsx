@@ -120,7 +120,7 @@ export default function UsuarioPerfilModal({ usuario, aberto, onClose }: Usuario
 
           <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
             <Avatar className="h-24 w-24 border-2 border-amber-500">
-              <AvatarImage src={usuario.avatar} alt={usuario.nome} />
+              <AvatarImage src={usuario.avatar || undefined} alt={usuario.nome} />
               <AvatarFallback className="bg-zinc-800 text-2xl">{usuario.nome.charAt(0)}</AvatarFallback>
             </Avatar>
 

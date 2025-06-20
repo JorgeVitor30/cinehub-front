@@ -92,7 +92,7 @@ export default function EditarPerfilModal({ aberto, onClose, usuario, onProfileU
         <form onSubmit={handleSubmit} className="space-y-6 py-4">
           <div className="flex justify-center mb-6">
             <Avatar className="w-20 h-20 border-2 border-amber-500">
-              <AvatarImage src={usuario.photo} alt={usuario.name} />
+              <AvatarImage src={usuario.photo || undefined} alt={usuario.name} />
               <AvatarFallback className="bg-zinc-800 text-xl">{usuario.name.charAt(0)}</AvatarFallback>
             </Avatar>
           </div>

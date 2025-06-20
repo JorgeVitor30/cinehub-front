@@ -48,6 +48,7 @@ interface FilmeModalProps {
   onClose: () => void
   isFavorited?: boolean
   onRatingUpdate?: (movieId: string, newRating: number, newComment: string) => void
+  onRatingDelete?: (movieId: string) => void
 }
 
 // Palavras-chave mockadas para filmes que não têm
@@ -74,7 +75,7 @@ const keywordsMock: Record<string, string[]> = {
   "20": ["Gotham", "Doença mental", "Comédia", "Violência", "Sociedade"],
 }
 
-export default function FilmeModal({ filme, aberto, onClose, isFavorited = false, onRatingUpdate }: FilmeModalProps) {
+export default function FilmeModal({ filme, aberto, onClose, isFavorited = false, onRatingUpdate, onRatingDelete }: FilmeModalProps) {
   const [avaliacaoUsuario, setAvaliacaoUsuario] = useState<number | null>(null)
   const [avaliacaoTemporaria, setAvaliacaoTemporaria] = useState<number>(0)
   const [isAvaliando, setIsAvaliando] = useState(false)
@@ -239,6 +240,39 @@ export default function FilmeModal({ filme, aberto, onClose, isFavorited = false
         setErro(err.message)
       } else {
         setErro("Não foi possível salvar sua anotação. Tente novamente.")
+      }
+    } finally {
+      setIsAvaliando(false)
+    }
+  }
+
+  const handleDeleteRating = async () => {
+    if (!filme) return
+
+    try {
+      setIsAvaliando(true)
+      setErro(null)
+
+      // Chamar o callback de remoção se existir
+      onRatingDelete?.(filme.id)
+
+      // Resetar estados locais
+      setAvaliacaoUsuario(null)
+      setAvaliacaoTemporaria(5)
+      setAnotacao("")
+      setAnotacaoSalva("")
+      setEditandoAnotacao(false)
+      setSucessoAvaliacao(true)
+
+      setTimeout(() => {
+        setSucessoAvaliacao(false)
+      }, 3000)
+    } catch (err) {
+      console.error('Erro ao deletar avaliação:', err)
+      if (err instanceof Error) {
+        setErro(err.message)
+      } else {
+        setErro("Não foi possível deletar sua avaliação. Tente novamente.")
       }
     } finally {
       setIsAvaliando(false)
@@ -424,42 +458,61 @@ export default function FilmeModal({ filme, aberto, onClose, isFavorited = false
                         <span className="text-2xl font-bold text-amber-500">{avaliacaoTemporaria}/10</span>
                       </div>
 
-                <Slider
-                  min={1}
-                  max={10}
-                  step={1}
-                  value={[avaliacaoTemporaria]}
-                  onValueChange={(value) => setAvaliacaoTemporaria(value[0])}
-                  className="w-full"
-                />
+                      <Slider
+                        min={1}
+                        max={10}
+                        step={1}
+                        value={[avaliacaoTemporaria]}
+                        onValueChange={(value) => setAvaliacaoTemporaria(value[0])}
+                        className="w-full"
+                      />
 
-                <div className="flex justify-between items-center">
-                  <div>
-                    {erro && <p className="text-red-500 text-sm">{erro}</p>}
-                    {sucessoAvaliacao && (
-                      <p className="text-green-500 text-sm flex items-center">
-                        <Check className="h-3 w-3 mr-1" />
-                        Avaliação registrada com sucesso!
-                      </p>
-                    )}
-                  </div>
-
-                        <Button
-                          onClick={handleAvaliar}
-                          disabled={isAvaliando || avaliacaoTemporaria === avaliacaoUsuario}
-                          className="bg-gradient-to-r from-amber-500 to-red-600 hover:from-amber-600 hover:to-red-700 text-white"
-                        >
-                          {isAvaliando ? (
-                            <>
-                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                              Enviando...
-                            </>
-                          ) : avaliacaoUsuario !== null ? (
-                            "Atualizar avaliação"
-                          ) : (
-                            "Avaliar filme"
+                      <div className="flex justify-between items-center">
+                        <div>
+                          {erro && <p className="text-red-500 text-sm">{erro}</p>}
+                          {sucessoAvaliacao && (
+                            <p className="text-green-500 text-sm flex items-center">
+                              <Check className="h-3 w-3 mr-1" />
+                              Avaliação registrada com sucesso!
+                            </p>
                           )}
-                        </Button>
+                        </div>
+
+                        <div className="flex gap-2">
+                          {avaliacaoUsuario !== null && (
+                            <Button
+                              variant="outline"
+                              onClick={handleDeleteRating}
+                              disabled={isAvaliando}
+                              className="border-red-500/50 text-red-500 hover:bg-red-500/10"
+                            >
+                              {isAvaliando ? (
+                                <>
+                                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                  Removendo...
+                                </>
+                              ) : (
+                                "Remover avaliação"
+                              )}
+                            </Button>
+                          )}
+                          <Button
+                            onClick={handleAvaliar}
+                            disabled={isAvaliando || avaliacaoTemporaria === avaliacaoUsuario}
+                            className="bg-gradient-to-r from-amber-500 to-red-600 hover:from-amber-600 hover:to-red-700 text-white"
+                          >
+                            {isAvaliando ? (
+                              <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Enviando...
+                              </>
+                            ) : avaliacaoUsuario !== null ? (
+                              "Atualizar avaliação"
+                            ) : (
+                              "Avaliar filme"
+                            )}
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -544,7 +597,7 @@ export default function FilmeModal({ filme, aberto, onClose, isFavorited = false
                           >
                             {producao.logo ? (
                               <img 
-                                src={producao.logo} 
+                                src={producao.logo || undefined} 
                                 alt={producao.nome}
                                 className="w-8 h-8 object-contain"
                               />

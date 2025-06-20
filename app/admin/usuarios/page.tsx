@@ -337,7 +337,7 @@ export default function AdminUsuariosPage() {
                         <TableCell>
                           <div className="flex items-center gap-3">
                             <Avatar>
-                              <AvatarImage src={usuario.avatar} alt={usuario.nome} />
+                              <AvatarImage src={usuario.avatar || undefined} alt={usuario.nome} />
                               <AvatarFallback className="bg-zinc-700">{usuario.nome.charAt(0)}</AvatarFallback>
                             </Avatar>
                             <div>

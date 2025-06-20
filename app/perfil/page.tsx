@@ -228,6 +228,52 @@ export default function PerfilPage() {
     }
   }
 
+  // Função para remover a avaliação da lista
+  const handleRatingDelete = async (movieId: string) => {
+    if (!userData) return
+
+    try {
+      // Encontrar a avaliação existente
+      const existingRating = userData.ratedList?.find(rated => rated.movie.id === movieId)
+
+      if (existingRating) {
+        // Deletar a avaliação
+        await rateService.deleteRate(movieId, userData.id)
+
+        // Atualizar o estado local do userData removendo a avaliação
+        setUserData(prevData => {
+          if (!prevData?.ratedList) return prevData
+
+          const updatedRatedList = prevData.ratedList.filter(rated => rated.movie.id !== movieId)
+
+          return {
+            ...prevData,
+            ratedList: updatedRatedList
+          }
+        })
+
+        // Atualizar o filme aberto no modal se necessário
+        setFilmeAberto(prev => {
+          if (prev && prev.id === movieId) {
+            return {
+              ...prev,
+              userRating: undefined
+            }
+          }
+          return prev
+        })
+
+        // Fechar o modal após deletar
+        setFilmeAberto(null)
+
+        // Forçar uma re-renderização do componente
+        setAbaAtual(prevTab => prevTab)
+      }
+    } catch (error) {
+      console.error('Erro ao deletar avaliação:', error)
+    }
+  }
+
   // Função para encontrar o filme detalhado pelo ID
   const encontrarFilmeDetalhado = (id: string) => {
     const filmeEncontrado = userData?.favorites?.find((filme) => filme.id === id)
@@ -306,7 +352,7 @@ export default function PerfilPage() {
                 <div className="flex flex-col items-center mb-6">
                   <div className="relative mb-4">
                     <Avatar className="w-24 h-24 border-2 border-amber-500">
-                      <AvatarImage src={userData.photo} alt={userData.name} />
+                      <AvatarImage src={userData.photo || undefined} alt={userData.name} />
                       <AvatarFallback className="bg-zinc-800 text-xl">{userData.name.charAt(0)}</AvatarFallback>
                     </Avatar>
                     <Button
@@ -785,6 +831,7 @@ export default function PerfilPage() {
           onClose={() => setFilmeAberto(null)}
           isFavorited={abaAtual === "favoritos"}
           onRatingUpdate={handleRatingUpdate}
+          onRatingDelete={handleRatingDelete}
         />
       )}
       <EditarPerfilModal
@@ -812,7 +859,7 @@ export default function PerfilPage() {
           <div className="flex flex-col items-center justify-center gap-6 py-4">
             <div className="relative w-32 h-32">
             <Avatar className="w-32 h-32 border-2 border-amber-500">
-              <AvatarImage src={previewUrl || userData.photo} alt={userData.name} />
+              <AvatarImage src={previewUrl || userData.photo || undefined} alt={userData.name} />
               <AvatarFallback className="bg-zinc-800 text-3xl">{userData.name.charAt(0)}</AvatarFallback>
             </Avatar>
             </div>
