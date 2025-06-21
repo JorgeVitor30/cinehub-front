@@ -38,6 +38,7 @@ import {
 import UsuarioCard from "@/components/usuario-card"
 import UsuarioPerfilModal from "@/components/usuario-perfil-modal"
 import { userService, type ReadAllUserDto } from "@/app/services/userService"
+import { authService } from "@/app/services/authService"
 
 // Dados mockados para demonstração
 const generosMock = [
@@ -70,6 +71,7 @@ export default function ComunidadePage() {
   const [ordenarPor, setOrdenarPor] = useState<"compatibilidade" | "avaliacoes" | "atividade">("compatibilidade")
   const [paginaAtual, setPaginaAtual] = useState(1)
   const [usuarioSelecionado, setUsuarioSelecionado] = useState<string | null>(null)
+  const [usuarioLogadoId, setUsuarioLogadoId] = useState<string | null>(null)
 
   // Número de usuários por página
   const USUARIOS_POR_PAGINA = 6
@@ -132,8 +134,19 @@ export default function ComunidadePage() {
       try {
         setLoading(true)
         setError(null)
+        
+        // Buscar o usuário logado primeiro
+        const decodedUser = await authService.getUserFromToken()
+        if (decodedUser?.nameid) {
+          setUsuarioLogadoId(decodedUser.nameid)
+        }
+        
         const usuariosData = await userService.getAllUsers()
-        setUsuarios(usuariosData)
+        
+        // Filtrar o usuário logado da lista
+        const usuariosFiltrados = usuariosData.filter(usuario => usuario.id !== decodedUser?.nameid)
+        
+        setUsuarios(usuariosFiltrados)
       } catch (err) {
         console.error('Erro ao carregar usuários:', err)
         setError('Erro ao carregar usuários. Tente novamente.')
