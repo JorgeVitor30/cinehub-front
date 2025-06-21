@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Search, Filter, Users, ChevronDown, X } from "lucide-react"
 import Navbar from "@/components/navbar"
 import { Button } from "@/components/ui/button"
@@ -36,7 +36,8 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination"
 import UsuarioCard from "@/components/usuario-card"
-import UsuarioPerfilModal from "@/components/usuario-perfil-modal";
+import UsuarioPerfilModal from "@/components/usuario-perfil-modal"
+import { userService, type ReadAllUserDto } from "@/app/services/userService"
 
 // Dados mockados para demonstração
 const generosMock = [
@@ -58,131 +59,10 @@ const generosMock = [
   "Terror",
 ]
 
-// Dados mockados de usuários
-const usuariosMock = [
-  {
-    id: "1",
-    nome: "João Silva",
-    avatar: "/placeholder.svg?height=200&width=200",
-    nivel: "Cinéfilo Experiente",
-    avaliacoes: 127,
-    generosFavoritos: ["Ficção Científica", "Ação", "Aventura"],
-    filmesFavoritos: ["Inception", "Matrix", "Interestellar"],
-    compatibilidade: 92,
-    ultimaAtividade: "Hoje",
-    bio: "Apaixonado por filmes de ficção científica e thrillers psicológicos. Sempre em busca da próxima obra-prima do cinema.",
-  },
-  {
-    id: "2",
-    nome: "Maria Oliveira",
-    avatar: "/placeholder.svg?height=200&width=200",
-    nivel: "Crítica Master",
-    avaliacoes: 215,
-    generosFavoritos: ["Drama", "Romance", "Comédia"],
-    filmesFavoritos: ["Parasita", "Titanic", "Pulp Fiction"],
-    compatibilidade: 78,
-    ultimaAtividade: "Ontem",
-    bio: "Estudante de cinema e apaixonada por narrativas que exploram a condição humana. Adoro descobrir filmes independentes.",
-  },
-  {
-    id: "3",
-    nome: "Pedro Santos",
-    avatar: "/placeholder.svg?height=200&width=200",
-    nivel: "Entusiasta de Cinema",
-    avaliacoes: 85,
-    generosFavoritos: ["Terror", "Suspense", "Mistério"],
-    filmesFavoritos: ["O Iluminado", "Hereditário", "Corra!"],
-    compatibilidade: 45,
-    ultimaAtividade: "3 dias atrás",
-    bio: "Fã de filmes de terror psicológico e suspense. Quanto mais perturbador, melhor!",
-  },
-  {
-    id: "4",
-    nome: "Ana Costa",
-    avatar: "/placeholder.svg?height=200&width=200",
-    nivel: "Cinéfila Casual",
-    avaliacoes: 42,
-    generosFavoritos: ["Animação", "Aventura", "Fantasia"],
-    filmesFavoritos: ["Divertida Mente", "Spirited Away", "Shrek"],
-    compatibilidade: 65,
-    ultimaAtividade: "1 semana atrás",
-    bio: "Adoro filmes de animação e fantasia que me fazem escapar da realidade. Pixar e Studio Ghibli são meus favoritos!",
-  },
-  {
-    id: "5",
-    nome: "Carlos Ferreira",
-    avatar: "/placeholder.svg?height=200&width=200",
-    nivel: "Historiador de Cinema",
-    avaliacoes: 310,
-    generosFavoritos: ["Clássicos", "Drama", "Guerra"],
-    filmesFavoritos: ["O Poderoso Chefão", "Cidadão Kane", "Casablanca"],
-    compatibilidade: 82,
-    ultimaAtividade: "Hoje",
-    bio: "Especialista em cinema clássico e história do cinema. Sempre disposto a discutir os grandes mestres da sétima arte.",
-  },
-  {
-    id: "6",
-    nome: "Fernanda Lima",
-    avatar: "/placeholder.svg?height=200&width=200",
-    nivel: "Crítica em Ascensão",
-    avaliacoes: 112,
-    generosFavoritos: ["Documentário", "Drama", "Biografia"],
-    filmesFavoritos: ["Democracia em Vertigem", "Cidade de Deus", "Bacurau"],
-    compatibilidade: 88,
-    ultimaAtividade: "2 dias atrás",
-    bio: "Apaixonada por cinema brasileiro e documentários que abordam questões sociais. Acredito no poder transformador do cinema.",
-  },
-  {
-    id: "7",
-    nome: "Ricardo Gomes",
-    avatar: "/placeholder.svg?height=200&width=200",
-    nivel: "Cinéfilo Novato",
-    avaliacoes: 28,
-    generosFavoritos: ["Ação", "Aventura", "Super-heróis"],
-    filmesFavoritos: ["Vingadores: Ultimato", "Batman: O Cavaleiro das Trevas", "Homem-Aranha"],
-    compatibilidade: 55,
-    ultimaAtividade: "3 dias atrás",
-    bio: "Fã de filmes de super-heróis e blockbusters de ação. Sempre ansioso pelos próximos lançamentos da Marvel e DC.",
-  },
-  {
-    id: "8",
-    nome: "Juliana Martins",
-    avatar: "/placeholder.svg?height=200&width=200",
-    nivel: "Especialista em Cult",
-    avaliacoes: 175,
-    generosFavoritos: ["Cult", "Indie", "Drama"],
-    filmesFavoritos: ["Donnie Darko", "Clube da Luta", "Mulholland Drive"],
-    compatibilidade: 70,
-    ultimaAtividade: "Ontem",
-    bio: "Apreciadora de cinema cult e filmes que desafiam as convenções narrativas. Quanto mais complexo e enigmático, melhor.",
-  },
-  {
-    id: "9",
-    nome: "Marcelo Alves",
-    avatar: "/placeholder.svg?height=200&width=200",
-    nivel: "Cinéfilo Clássico",
-    avaliacoes: 95,
-    generosFavoritos: ["Faroeste", "Noir", "Clássicos"],
-    filmesFavoritos: ["Três Homens em Conflito", "Chinatown", "Casablanca"],
-    compatibilidade: 60,
-    ultimaAtividade: "5 dias atrás",
-    bio: "Apaixonado por cinema clássico, especialmente faroestes e filmes noir. Acredito que o cinema atingiu seu auge nas décadas de 40 a 70.",
-  },
-  {
-    id: "10",
-    nome: "Camila Souza",
-    avatar: "/placeholder.svg?height=200&width=200",
-    nivel: "Crítica Internacional",
-    avaliacoes: 203,
-    generosFavoritos: ["Cinema Mundial", "Drama", "Comédia"],
-    filmesFavoritos: ["Parasita", "O Fabuloso Destino de Amélie Poulain", "Cidade de Deus"],
-    compatibilidade: 85,
-    ultimaAtividade: "Hoje",
-    bio: "Especialista em cinema internacional e produções de diferentes culturas. Adoro descobrir joias cinematográficas de todos os cantos do mundo.",
-  },
-]
-
 export default function ComunidadePage() {
+  const [usuarios, setUsuarios] = useState<ReadAllUserDto[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [termoBusca, setTermoBusca] = useState("")
   const [generosSelecionados, setGenerosSelecionados] = useState<string[]>([])
   const [compatibilidadeMinima, setCompatibilidadeMinima] = useState(0)
@@ -194,25 +74,100 @@ export default function ComunidadePage() {
   // Número de usuários por página
   const USUARIOS_POR_PAGINA = 6
 
+  // Função para mapear ReadAllUserDto para o formato do UsuarioCard
+  const mapearParaUsuarioCard = (user: ReadAllUserDto) => {
+    // Calcular compatibilidade baseada nos gêneros selecionados
+    const calcularCompatibilidade = () => {
+      if (generosSelecionados.length === 0) return 85 // Valor padrão quando não há filtros
+      const generosComuns = user.topGenres.filter(genero => generosSelecionados.includes(genero))
+      return Math.round((generosComuns.length / generosSelecionados.length) * 100)
+    }
+
+    // Determinar nível baseado no número de avaliações
+    const determinarNivel = (rateCount: number) => {
+      if (rateCount >= 200) return "Crítica Master"
+      if (rateCount >= 100) return "Cinéfilo Experiente"
+      if (rateCount >= 50) return "Entusiasta de Cinema"
+      if (rateCount >= 20) return "Cinéfilo Casual"
+      return "Cinéfilo Novato"
+    }
+
+    // Calcular última atividade baseada na data de criação
+    const calcularUltimaAtividade = (createdAt: string) => {
+      const dataCriacao = new Date(createdAt)
+      const agora = new Date()
+      const diffDias = Math.floor((agora.getTime() - dataCriacao.getTime()) / (1000 * 60 * 60 * 24))
+      
+      if (diffDias === 0) return "Hoje"
+      if (diffDias === 1) return "Ontem"
+      if (diffDias < 7) return `${diffDias} dias atrás`
+      if (diffDias < 30) return `${Math.floor(diffDias / 7)} semanas atrás`
+      return `${Math.floor(diffDias / 30)} meses atrás`
+    }
+
+    // Obter filmes favoritos dos últimos 5 filmes avaliados
+    const filmesFavoritos = user.ratedList
+      .slice(0, 5)
+      .map(rate => rate.movie.title)
+
+    return {
+      id: user.id,
+      nome: user.name,
+      avatar: user.photo || "/placeholder.svg?height=200&width=200",
+      nivel: determinarNivel(user.rateCount),
+      avaliacoes: user.rateCount,
+      generosFavoritos: user.topGenres,
+      filmesFavoritos: filmesFavoritos,
+      compatibilidade: calcularCompatibilidade(),
+      ultimaAtividade: calcularUltimaAtividade(user.createdAt),
+      bio: `Cinéfilo com ${user.rateCount} avaliações. Gênero favorito: ${user.genre}.`
+    }
+  }
+
+  // Carregar usuários da API
+  useEffect(() => {
+    const fetchUsuarios = async () => {
+      try {
+        setLoading(true)
+        setError(null)
+        const usuariosData = await userService.getAllUsers()
+        setUsuarios(usuariosData)
+      } catch (err) {
+        console.error('Erro ao carregar usuários:', err)
+        setError('Erro ao carregar usuários. Tente novamente.')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchUsuarios()
+  }, [])
+
   // Aplicar filtros
-  const usuariosFiltrados = usuariosMock.filter((usuario) => {
+  const usuariosFiltrados = (usuarios || []).filter((usuario) => {
     // Filtrar por termo de busca
     const matchBusca =
-      usuario.nome.toLowerCase().includes(termoBusca.toLowerCase()) ||
-      usuario.bio.toLowerCase().includes(termoBusca.toLowerCase()) ||
-      usuario.generosFavoritos.some((genero) => genero.toLowerCase().includes(termoBusca.toLowerCase())) ||
-      usuario.filmesFavoritos.some((filme) => filme.toLowerCase().includes(termoBusca.toLowerCase()))
+      usuario.name.toLowerCase().includes(termoBusca.toLowerCase()) ||
+      usuario.topGenres.some((genero) => genero.toLowerCase().includes(termoBusca.toLowerCase())) ||
+      usuario.ratedList.some((rate) => rate.movie.title.toLowerCase().includes(termoBusca.toLowerCase()))
 
     // Filtrar por gêneros
     const matchGeneros =
       generosSelecionados.length === 0 ||
-      generosSelecionados.some((genero) => usuario.generosFavoritos.includes(genero))
+      generosSelecionados.some((genero) => usuario.topGenres.includes(genero))
 
-    // Filtrar por compatibilidade mínima
-    const matchCompatibilidade = usuario.compatibilidade >= compatibilidadeMinima
+    // Calcular compatibilidade baseada nos gêneros em comum
+    const calcularCompatibilidade = (userGenres: string[]) => {
+      if (generosSelecionados.length === 0) return 100
+      const generosComuns = userGenres.filter(genero => generosSelecionados.includes(genero))
+      return Math.round((generosComuns.length / generosSelecionados.length) * 100)
+    }
+    
+    const compatibilidade = calcularCompatibilidade(usuario.topGenres)
+    const matchCompatibilidade = compatibilidade >= compatibilidadeMinima
 
     // Filtrar por avaliações mínimas
-    const matchAvaliacoes = usuario.avaliacoes >= avaliacoesMinimas
+    const matchAvaliacoes = usuario.rateCount >= avaliacoesMinimas
 
     return matchBusca && matchGeneros && matchCompatibilidade && matchAvaliacoes
   })
@@ -221,18 +176,16 @@ export default function ComunidadePage() {
   const usuariosOrdenados = [...usuariosFiltrados].sort((a, b) => {
     switch (ordenarPor) {
       case "compatibilidade":
-        return b.compatibilidade - a.compatibilidade
+        const compatibilidadeA = generosSelecionados.length === 0 ? 100 : 
+          Math.round((a.topGenres.filter(g => generosSelecionados.includes(g)).length / generosSelecionados.length) * 100)
+        const compatibilidadeB = generosSelecionados.length === 0 ? 100 : 
+          Math.round((b.topGenres.filter(g => generosSelecionados.includes(g)).length / generosSelecionados.length) * 100)
+        return compatibilidadeB - compatibilidadeA
       case "avaliacoes":
-        return b.avaliacoes - a.avaliacoes
+        return b.rateCount - a.rateCount
       case "atividade":
-        // Ordenação simplificada por atividade (na vida real seria por data)
-        const atividadeValor = (atividade: string) => {
-          if (atividade === "Hoje") return 4
-          if (atividade === "Ontem") return 3
-          if (atividade.includes("dias")) return 2
-          return 1
-        }
-        return atividadeValor(b.ultimaAtividade) - atividadeValor(a.ultimaAtividade)
+        // Ordenação por data de criação (mais recente primeiro)
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       default:
         return 0
     }
@@ -259,7 +212,8 @@ export default function ComunidadePage() {
 
   // Encontrar usuário pelo ID
   const getUsuarioById = (id: string) => {
-    return usuariosMock.find((usuario) => usuario.id === id) || null
+    const usuario = (usuarios || []).find((usuario) => usuario.id === id)
+    return usuario ? mapearParaUsuarioCard(usuario) : null
   }
 
   // Função para gerar os links de paginação
@@ -489,7 +443,26 @@ export default function ComunidadePage() {
 
         {/* Resultados */}
         <div className="mt-6">
-          {usuariosOrdenados.length > 0 ? (
+          {loading ? (
+            <div className="text-center py-16">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto mb-4"></div>
+              <h2 className="text-xl font-semibold mb-2">Carregando usuários...</h2>
+              <p className="text-zinc-400">Buscando cinéfilos na comunidade</p>
+            </div>
+          ) : error ? (
+            <div className="text-center py-16">
+              <Users className="h-16 w-16 mx-auto text-red-500 mb-4" />
+              <h2 className="text-xl font-semibold mb-2">Erro ao carregar usuários</h2>
+              <p className="text-zinc-400 max-w-md mx-auto mb-6">{error}</p>
+              <Button 
+                variant="outline" 
+                className="border-zinc-700 hover:bg-zinc-800"
+                onClick={() => window.location.reload()}
+              >
+                Tentar novamente
+              </Button>
+            </div>
+          ) : usuariosOrdenados.length > 0 ? (
             <>
               <div className="flex items-center justify-between mb-4">
                 <p className="text-zinc-400">
@@ -505,7 +478,7 @@ export default function ComunidadePage() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {usuariosPaginaAtual.map((usuario) => (
-                  <UsuarioCard key={usuario.id} usuario={usuario} onClick={() => setUsuarioSelecionado(usuario.id)} />
+                  <UsuarioCard key={usuario.id} usuario={mapearParaUsuarioCard(usuario)} onClick={() => setUsuarioSelecionado(usuario.id)} />
                 ))}
               </div>
 

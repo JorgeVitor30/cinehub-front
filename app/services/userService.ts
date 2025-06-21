@@ -21,6 +21,33 @@ export interface UpdateProfileRequest {
   description: string
 }
 
+export interface RankingUser {
+  currentRank: number
+  totalUsers: number
+}
+
+export interface ReadRateDto {
+  id: string
+  movie: Movie
+  rate: number
+  comment: string
+}
+
+export interface ReadAllUserDto {
+  id: string
+  name: string
+  email: string
+  role: string
+  visibilityPublic: boolean
+  photo?: string
+  createdAt: string
+  genre: string
+  ratedList: ReadRateDto[]
+  rankingUser?: RankingUser | null
+  topGenres: string[]
+  rateCount: number
+}
+
 export interface User {
   id: string
   name: string
@@ -190,6 +217,33 @@ export const userService = {
     } catch (error) {
       console.error('Error updating profile:', error)
       throw error
+    }
+  },
+
+  async getAllUsers(): Promise<ReadAllUserDto[]> {
+    try {
+      const token = authService.getToken()
+
+      const response = await fetch(`${API_URL}/users`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
+      })
+
+      if (!response.ok) {
+        console.error(`Erro ao buscar usuários: ${response.statusText}`)
+        return []
+      }
+
+      const data = await response.json()
+      // Extrair o content da resposta
+      const users: ReadAllUserDto[] = data.content || data || []
+      return users
+    } catch (error) {
+      console.error("Erro ao buscar usuários:", error)
+      return []
     }
   }
 }
