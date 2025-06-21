@@ -236,7 +236,7 @@ export default function UsuarioPerfilModal({ usuario, aberto, onClose }: Usuario
                       key={rated.id}
                       className="flex items-center gap-4 p-3 rounded-lg bg-zinc-700 hover:bg-zinc-600 transition-colors cursor-pointer"
                     >
-                      <div className="relative w-12 h-18 flex-shrink-0 overflow-hidden rounded">
+                      <div className="relative w-16 h-24 flex-shrink-0 overflow-hidden rounded">
                         <Image src={rated.movie.posterPhotoUrl || "/placeholder.svg"} alt={rated.movie.title} fill className="object-cover" />
                       </div>
                       <div className="flex-1 min-w-0">
