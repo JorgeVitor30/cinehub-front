@@ -310,13 +310,18 @@ export default function FilmeModal({ filme, aberto, onClose, isFavorited = false
             >
               <X className="h-5 w-5" />
             </button>
+
+            {/* Título do filme no canto superior esquerdo */}
+            <div className="absolute top-4 left-4 z-50 max-w-[70%]">
+              <h1 className="text-xl md:text-2xl font-bold text-white drop-shadow-lg">
+                {filme.titulo}
+              </h1>
+            </div>
           </div>
 
           {/* Conteúdo com scroll */}
           <div className="flex-1 overflow-y-auto min-h-0">
             <div className="relative -mt-20 px-6 pb-6">
-              <h2 className="text-2xl md:text-3xl font-bold mb-2">{filme.titulo}</h2>
-              
               {/* Metadados do filme */}
               <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-zinc-300 mb-4">
                 <div className="flex items-center">
