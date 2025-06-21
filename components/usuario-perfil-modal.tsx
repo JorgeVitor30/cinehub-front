@@ -22,6 +22,7 @@ interface Usuario {
   compatibilidade: number
   ultimaAtividade: string
   bio: string
+  createdAt?: string
   ratedList?: {
     id: string
     movie: {
@@ -209,7 +210,9 @@ export default function UsuarioPerfilModal({ usuario, aberto, onClose }: Usuario
                   <div className="flex items-center justify-between text-sm">
                     <div className="flex items-center gap-1">
                       <Calendar className="h-4 w-4 text-zinc-400" />
-                      <span>Membro desde 2023</span>
+                      <span>
+                        Membro desde {usuario.createdAt ? new Date(usuario.createdAt).getFullYear() : '2023'}
+                      </span>
                     </div>
                     <div className="flex items-center gap-1">
                       <Clock className="h-4 w-4 text-zinc-400" />
