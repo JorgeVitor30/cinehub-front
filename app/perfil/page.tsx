@@ -16,6 +16,7 @@ import {
   BarChart3,
   Upload,
   Sparkles,
+  FileText,
 } from "lucide-react"
 import Navbar from "@/components/navbar"
 import { Button } from "@/components/ui/button"
@@ -366,6 +367,11 @@ export default function PerfilPage() {
                   </div>
                   <h2 className="text-xl font-bold">{userData.name}</h2>
                   <p className="text-zinc-400 text-sm">{userData.email}</p>
+                  {userData.description && (
+                    <p className="text-zinc-300 text-sm text-center mt-1 max-w-xs">
+                      {userData.description}
+                    </p>
+                  )}
                 </div>
 
                 <div className="space-y-4">

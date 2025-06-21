@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { useState } from "react"
-import { Check, Loader2, Mail, User, X } from "lucide-react"
+import { Check, Loader2, Mail, User, X, FileText } from "lucide-react"
 import {
   Dialog,
   DialogContent,
@@ -14,6 +14,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { userService } from "@/app/services/userService"
 import { Switch } from "@/components/ui/switch"
@@ -27,6 +28,7 @@ interface EditarPerfilModalProps {
     email: string
     photo?: string
     visibilityPublic: boolean
+    description?: string
   }
   onProfileUpdate?: () => void
 }
@@ -34,6 +36,7 @@ interface EditarPerfilModalProps {
 export default function EditarPerfilModal({ aberto, onClose, usuario, onProfileUpdate }: EditarPerfilModalProps) {
   const [nome, setNome] = useState(usuario.name)
   const [email, setEmail] = useState(usuario.email)
+  const [description, setDescription] = useState(usuario.description || "")
   const [visibilityPublic, setVisibilityPublic] = useState(usuario.visibilityPublic)
   const [isLoading, setIsLoading] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
@@ -60,7 +63,8 @@ export default function EditarPerfilModal({ aberto, onClose, usuario, onProfileU
       await userService.updateProfile(usuario.id, {
         name: nome,
         email: email,
-        visibilityPublic: visibilityPublic
+        visibilityPublic: visibilityPublic,
+        description: description.trim() || ""
       })
 
       setSucesso(true)
@@ -129,6 +133,27 @@ export default function EditarPerfilModal({ aberto, onClose, usuario, onProfileU
                   placeholder="seu.email@exemplo.com"
                 />
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="description" className="text-white">
+                Descrição
+              </Label>
+              <div className="relative">
+                <FileText className="absolute left-3 top-3 h-4 w-4 text-zinc-400" />
+                <Textarea
+                  id="description"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  className="pl-10 bg-zinc-800 border-zinc-700 text-white focus-visible:ring-amber-500 resize-none"
+                  placeholder="Digite uma descrição sobre você (opcional)"
+                  maxLength={200}
+                  rows={3}
+                />
+              </div>
+              <p className="text-xs text-zinc-500 text-right">
+                {description.length}/200 caracteres
+              </p>
             </div>
 
             <div className="flex items-center justify-between">

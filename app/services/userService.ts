@@ -18,6 +18,7 @@ export interface UpdateProfileRequest {
   name: string
   email: string
   visibilityPublic: boolean
+  description: string
 }
 
 export interface User {
@@ -30,6 +31,7 @@ export interface User {
   createdAt: string
   favorites: Movie[]
   genre: string
+  description?: string
   ratedList?: {
     id: string
     movie: Movie
