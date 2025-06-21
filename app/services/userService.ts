@@ -42,6 +42,7 @@ export interface ReadAllUserDto {
   photo?: string
   createdAt: string
   genre: string
+  description?: string
   ratedList: ReadRateDto[]
   rankingUser?: RankingUser | null
   topGenres: string[]

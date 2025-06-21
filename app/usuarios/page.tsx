@@ -120,7 +120,8 @@ export default function ComunidadePage() {
       filmesFavoritos: filmesFavoritos,
       compatibilidade: calcularCompatibilidade(),
       ultimaAtividade: calcularUltimaAtividade(user.createdAt),
-      bio: `Cinéfilo com ${user.rateCount} avaliações. Gênero favorito: ${user.genre}.`
+      bio: user.description || `Cinéfilo com ${user.rateCount} avaliações. Gênero favorito: ${user.genre}.`,
+      ratedList: user.ratedList
     }
   }
 

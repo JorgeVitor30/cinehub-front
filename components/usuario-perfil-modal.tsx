@@ -22,6 +22,18 @@ interface Usuario {
   compatibilidade: number
   ultimaAtividade: string
   bio: string
+  ratedList?: {
+    id: string
+    movie: {
+      id: string
+      title: string
+      posterPhotoUrl: string
+      releaseDate: string
+      voteAverage: number | { source: string; parsedValue: number }
+    }
+    rate: number
+    comment: string
+  }[]
 }
 
 interface UsuarioPerfilModalProps {
@@ -29,64 +41,6 @@ interface UsuarioPerfilModalProps {
   aberto: boolean
   onClose: () => void
 }
-
-// Dados mockados para demonstração
-const filmesAvaliadosMock = [
-  {
-    id: "1",
-    titulo: "Inception",
-    capa: "https://image.tmdb.org/t/p/w500//oYuLEt3zVCKq57qu2F8dT7NIa6f.jpg",
-    avaliacaoUsuario: 9,
-    avaliacao: 8.8,
-    ano: 2010,
-  },
-  {
-    id: "13",
-    titulo: "O Senhor dos Anéis: O Retorno do Rei",
-    capa: "https://image.tmdb.org/t/p/w500/pbrkL804c8yAv3zBZR4QPEafpAR.jpg",
-    avaliacaoUsuario: 10,
-    avaliacao: 9.0,
-    ano: 2003,
-  },
-  {
-    id: "17",
-    titulo: "Tudo em Todo Lugar ao Mesmo Tempo",
-    capa: "https://image.tmdb.org/t/p/w500/pbrkL804c8yAv3zBZR4QPEafpAR.jpg",
-    avaliacaoUsuario: 8,
-    avaliacao: 8.7,
-    ano: 2022,
-  },
-  {
-    id: "19",
-    titulo: "Parasita",
-    capa: "https://image.tmdb.org/t/p/w500/pbrkL804c8yAv3zBZR4QPEafpAR.jpg",
-    avaliacaoUsuario: 9,
-    avaliacao: 8.9,
-    ano: 2019,
-  },
-]
-
-// Dados mockados para filmes em comum
-const filmesEmComumMock = [
-  {
-    id: "1",
-    titulo: "Inception",
-    capa: "https://image.tmdb.org/t/p/w500//oYuLEt3zVCKq57qu2F8dT7NIa6f.jpg",
-    avaliacaoUsuario: 9,
-    avaliacaoVisitante: 8,
-    avaliacao: 8.8,
-    ano: 2010,
-  },
-  {
-    id: "19",
-    titulo: "Parasita",
-    capa: "https://image.tmdb.org/t/p/w500/pbrkL804c8yAv3zBZR4QPEafpAR.jpg",
-    avaliacaoUsuario: 9,
-    avaliacaoVisitante: 10,
-    avaliacao: 8.9,
-    ano: 2019,
-  },
-]
 
 export default function UsuarioPerfilModal({ usuario, aberto, onClose }: UsuarioPerfilModalProps) {
   const [activeTab, setActiveTab] = useState("perfil")
@@ -102,6 +56,12 @@ export default function UsuarioPerfilModal({ usuario, aberto, onClose }: Usuario
     if (valor >= 60) return "text-amber-500"
     if (valor >= 40) return "text-orange-500"
     return "text-red-500"
+  }
+
+  // Função para extrair valor numérico da avaliação
+  const extractNumericValue = (value: number | { source: string; parsedValue: number }): number => {
+    if (typeof value === 'number') return value
+    return value.parsedValue
   }
 
   return (
@@ -266,36 +226,44 @@ export default function UsuarioPerfilModal({ usuario, aberto, onClose }: Usuario
             <div className="bg-zinc-800 rounded-lg p-4">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-semibold">Avaliações Recentes</h3>
-                <Badge className="bg-amber-500 text-black">{filmesAvaliadosMock.length} filmes</Badge>
+                <Badge className="bg-amber-500 text-black">{usuario.ratedList?.length || 0} filmes</Badge>
               </div>
 
               <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
-                {filmesAvaliadosMock.map((filme) => (
-                  <div
-                    key={filme.id}
-                    className="flex items-center gap-4 p-3 rounded-lg bg-zinc-700 hover:bg-zinc-600 transition-colors cursor-pointer"
-                  >
-                    <div className="relative w-12 h-18 flex-shrink-0 overflow-hidden rounded">
-                      <Image src={filme.capa || "/placeholder.svg"} alt={filme.titulo} fill className="object-cover" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h4 className="font-semibold text-white truncate">{filme.titulo}</h4>
-                      <div className="flex items-center gap-2 text-sm text-zinc-400">
-                        <span>{filme.ano}</span>
+                {usuario.ratedList && usuario.ratedList.length > 0 ? (
+                  usuario.ratedList.map((rated) => (
+                    <div
+                      key={rated.id}
+                      className="flex items-center gap-4 p-3 rounded-lg bg-zinc-700 hover:bg-zinc-600 transition-colors cursor-pointer"
+                    >
+                      <div className="relative w-12 h-18 flex-shrink-0 overflow-hidden rounded">
+                        <Image src={rated.movie.posterPhotoUrl || "/placeholder.svg"} alt={rated.movie.title} fill className="object-cover" />
                       </div>
-                      <div className="flex items-center mt-1">
-                        <Star className="h-4 w-4 text-amber-500 fill-amber-500 mr-1" />
-                        <span className="text-sm font-medium">{filme.avaliacao.toFixed(1)}</span>
-                        <span className="text-xs text-zinc-500 ml-1">global</span>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-semibold text-white truncate">{rated.movie.title}</h4>
+                        <div className="flex items-center gap-2 text-sm text-zinc-400">
+                          <span>{new Date(rated.movie.releaseDate).getFullYear()}</span>
+                        </div>
+                        <div className="flex items-center mt-1">
+                          <Star className="h-4 w-4 text-amber-500 fill-amber-500 mr-1" />
+                          <span className="text-sm font-medium">{extractNumericValue(rated.movie.voteAverage).toFixed(1)}</span>
+                          <span className="text-xs text-zinc-500 ml-1">global</span>
+                        </div>
+                      </div>
+                      <div className="flex-shrink-0 flex gap-2">
+                        <div className="bg-zinc-800 rounded-full px-3 py-1 text-sm font-bold text-amber-500">
+                          {rated.rate}/10
+                        </div>
                       </div>
                     </div>
-                    <div className="flex-shrink-0 flex gap-2">
-                      <div className="bg-zinc-800 rounded-full px-3 py-1 text-sm font-bold text-amber-500">
-                        {filme.avaliacaoUsuario}/10
-                      </div>
-                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8">
+                    <Star className="h-12 w-12 mx-auto text-zinc-700 mb-3" />
+                    <h3 className="text-lg font-medium text-zinc-400">Nenhuma avaliação</h3>
+                    <p className="text-zinc-500 text-sm mt-1">Este usuário ainda não avaliou nenhum filme</p>
                   </div>
-                ))}
+                )}
               </div>
             </div>
           </TabsContent>
@@ -305,57 +273,14 @@ export default function UsuarioPerfilModal({ usuario, aberto, onClose }: Usuario
             <div className="bg-zinc-800 rounded-lg p-4">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-semibold">Filmes em Comum</h3>
-                <Badge className="bg-amber-500 text-black">{filmesEmComumMock.length} filmes</Badge>
+                <Badge className="bg-amber-500 text-black">{0} filmes</Badge>
               </div>
 
-              {filmesEmComumMock.length > 0 ? (
-                <div className="space-y-4">
-                  {filmesEmComumMock.map((filme) => (
-                    <div
-                      key={filme.id}
-                      className="flex items-center gap-4 p-3 rounded-lg bg-zinc-700 hover:bg-zinc-600 transition-colors cursor-pointer"
-                    >
-                      <div className="relative w-12 h-18 flex-shrink-0 overflow-hidden rounded">
-                        <Image
-                          src={filme.capa || "/placeholder.svg"}
-                          alt={filme.titulo}
-                          fill
-                          className="object-cover"
-                        />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h4 className="font-semibold text-white truncate">{filme.titulo}</h4>
-                        <div className="flex items-center gap-2 text-sm text-zinc-400">
-                          <span>{filme.ano}</span>
-                        </div>
-                        <div className="flex items-center gap-4 mt-1">
-                          <div className="flex items-center">
-                            <Star className="h-4 w-4 text-green-500 fill-green-500 mr-1" />
-                            <span className="text-sm font-medium">{filme.avaliacaoVisitante}</span>
-                            <span className="text-xs text-zinc-500 ml-1">você</span>
-                          </div>
-                          <div className="flex items-center">
-                            <Star className="h-4 w-4 text-amber-500 fill-amber-500 mr-1" />
-                            <span className="text-sm font-medium">{filme.avaliacaoUsuario}</span>
-                            <span className="text-xs text-zinc-500 ml-1">{usuario.nome}</span>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex-shrink-0">
-                        <div className="bg-zinc-800 rounded-full px-3 py-1 text-sm font-bold text-green-500">
-                          {Math.abs(filme.avaliacaoUsuario - filme.avaliacaoVisitante) <= 1 ? "Concordam" : "Diferem"}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <Film className="h-12 w-12 mx-auto text-zinc-700 mb-3" />
-                  <h3 className="text-lg font-medium text-zinc-400">Nenhum filme em comum</h3>
-                  <p className="text-zinc-500 text-sm mt-1">Vocês ainda não avaliaram os mesmos filmes</p>
-                </div>
-              )}
+              <div className="text-center py-8">
+                <Film className="h-12 w-12 mx-auto text-zinc-700 mb-3" />
+                <h3 className="text-lg font-medium text-zinc-400">Nenhum filme em comum</h3>
+                <p className="text-zinc-500 text-sm mt-1">Vocês ainda não avaliaram os mesmos filmes</p>
+              </div>
             </div>
 
             <div className="bg-zinc-800 rounded-lg p-4">
