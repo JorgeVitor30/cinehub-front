@@ -237,7 +237,12 @@ export default function UsuarioPerfilModal({ usuario, aberto, onClose }: Usuario
                       <p className="text-xs text-zinc-400">Avaliações</p>
                     </div>
                     <div className="bg-zinc-700 rounded-lg p-3 text-center">
-                      <div className="text-lg font-bold">8.4</div>
+                      <div className="text-lg font-bold">
+                        {usuario.ratedList && usuario.ratedList.length > 0 
+                          ? (usuario.ratedList.reduce((sum, rated) => sum + rated.rate, 0) / usuario.ratedList.length).toFixed(1)
+                          : '0.0'
+                        }
+                      </div>
                       <p className="text-xs text-zinc-400">Média</p>
                     </div>
                   </div>
