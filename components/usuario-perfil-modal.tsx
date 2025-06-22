@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Image from "next/image"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
@@ -10,6 +10,8 @@ import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { Separator } from "@/components/ui/separator"
 import { Star, Film, Clock, Calendar, BarChart3, MessageCircle, UserPlus, X } from "lucide-react"
+import { userService, type User } from "@/app/services/userService"
+import { authService } from "@/app/services/authService"
 
 interface Usuario {
   id: string
@@ -45,6 +47,66 @@ interface UsuarioPerfilModalProps {
 
 export default function UsuarioPerfilModal({ usuario, aberto, onClose }: UsuarioPerfilModalProps) {
   const [activeTab, setActiveTab] = useState("perfil")
+  const [usuarioLogado, setUsuarioLogado] = useState<User | null>(null)
+  const [filmesEmComum, setFilmesEmComum] = useState<any[]>([])
+  const [compatibilidadeGeneros, setCompatibilidadeGeneros] = useState<{genero: string, compatibilidade: number}[]>([])
+
+  // Buscar usuário logado quando o modal abrir
+  useEffect(() => {
+    const fetchUsuarioLogado = async () => {
+      if (aberto && usuario) {
+        try {
+          const decodedUser = await authService.getUserFromToken()
+          if (decodedUser?.nameid) {
+            const usuarioLogadoData = await userService.getUserById(decodedUser.nameid)
+            setUsuarioLogado(usuarioLogadoData)
+          }
+        } catch (error) {
+          console.error('Erro ao buscar usuário logado:', error)
+        }
+      }
+    }
+
+    fetchUsuarioLogado()
+  }, [aberto, usuario])
+
+  // Calcular filmes em comum e compatibilidade de gêneros
+  useEffect(() => {
+    if (usuarioLogado && usuario && usuario.ratedList) {
+      // Calcular filmes em comum
+      const filmesUsuarioLogado = new Set(usuarioLogado.ratedList?.map((rate: any) => rate.movie.id) || [])
+      const filmesEmComumData = usuario.ratedList.filter(rate => 
+        filmesUsuarioLogado.has(rate.movie.id)
+      )
+      setFilmesEmComum(filmesEmComumData)
+
+      // Calcular compatibilidade de gêneros
+      let generosUsuarioLogado: string[] = []
+      
+      if (usuarioLogado.filmesAssistidosPorGenero && usuarioLogado.filmesAssistidosPorGenero.length > 0) {
+        generosUsuarioLogado = usuarioLogado.filmesAssistidosPorGenero
+          .sort((a, b) => b.quantidade - a.quantidade)
+          .slice(0, 3)
+          .map(item => item.genero.trim())
+      } else if (usuarioLogado.genre) {
+        generosUsuarioLogado = [usuarioLogado.genre.trim()]
+      }
+
+      const generosUsuarioAtual = usuario.generosFavoritos.slice(0, 3).map(genero => genero.trim())
+      
+      const compatibilidadeData = generosUsuarioAtual.map((genero, index) => {
+        const temGenero = generosUsuarioLogado.some(generoLogado => 
+          generoLogado.toLowerCase() === genero.toLowerCase()
+        )
+        return {
+          genero,
+          compatibilidade: temGenero ? (index === 0 ? 90 : index === 1 ? 70 : 50) : 20
+        }
+      })
+      
+      setCompatibilidadeGeneros(compatibilidadeData)
+    }
+  }, [usuarioLogado, usuario])
 
   if (!usuario) {
     return null
@@ -249,28 +311,57 @@ export default function UsuarioPerfilModal({ usuario, aberto, onClose }: Usuario
             <div className="bg-zinc-800 rounded-lg p-4">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-semibold">Filmes em Comum</h3>
-                <Badge className="bg-amber-500 text-black">{0} filmes</Badge>
+                <Badge className="bg-amber-500 text-black">{filmesEmComum.length} filmes</Badge>
               </div>
 
-              <div className="text-center py-8">
-                <Film className="h-12 w-12 mx-auto text-zinc-700 mb-3" />
-                <h3 className="text-lg font-medium text-zinc-400">Nenhum filme em comum</h3>
-                <p className="text-zinc-500 text-sm mt-1">Vocês ainda não avaliaram os mesmos filmes</p>
-              </div>
+              {filmesEmComum.length > 0 ? (
+                <div className="space-y-3 max-h-[250px] overflow-y-auto pr-2 custom-scrollbar">
+                  {filmesEmComum.map((rated) => (
+                    <div
+                      key={rated.id}
+                      className="flex items-center gap-3 p-2 rounded-lg bg-zinc-700 hover:bg-zinc-600 transition-colors cursor-pointer"
+                    >
+                      <div className="relative w-12 h-16 flex-shrink-0 overflow-hidden rounded">
+                        <Image src={rated.movie.posterPhotoUrl || "/placeholder.svg"} alt={rated.movie.title} fill className="object-cover" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-semibold text-white text-sm truncate">{rated.movie.title}</h4>
+                        <div className="flex items-center gap-2 text-xs text-zinc-400">
+                          <span>{new Date(rated.movie.releaseDate).getFullYear()}</span>
+                          <span>•</span>
+                          <Star className="h-3 w-3 text-amber-500 fill-amber-500" />
+                          <span>{extractNumericValue(rated.movie.voteAverage).toFixed(1)}</span>
+                        </div>
+                      </div>
+                      <div className="flex-shrink-0">
+                        <div className="bg-zinc-800 rounded-full px-2 py-1 text-xs font-bold text-amber-500">
+                          {rated.rate}/10
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-4">
+                  <Film className="h-8 w-8 mx-auto text-zinc-700 mb-2" />
+                  <h3 className="text-sm font-medium text-zinc-400">Nenhum filme em comum</h3>
+                  <p className="text-zinc-500 text-xs mt-1">Vocês ainda não avaliaram os mesmos filmes</p>
+                </div>
+              )}
             </div>
 
             <div className="bg-zinc-800 rounded-lg p-4">
               <h3 className="text-lg font-semibold mb-3">Compatibilidade de Gêneros</h3>
               <div className="space-y-3">
-                {usuario.generosFavoritos.map((genero, index) => (
+                {compatibilidadeGeneros.map((item, index) => (
                   <div key={index}>
                     <div className="flex justify-between items-center mb-1">
-                      <span className="text-sm">{genero}</span>
+                      <span className="text-sm">{item.genero}</span>
                       <span className="text-xs text-zinc-400">
-                        {index === 0 ? "Muito compatível" : index === 1 ? "Compatível" : "Pouco compatível"}
+                        {item.compatibilidade}%
                       </span>
                     </div>
-                    <Progress value={index === 0 ? 90 : index === 1 ? 70 : 40} className="h-2 bg-zinc-700" />
+                    <Progress value={item.compatibilidade} className="h-2 bg-zinc-700" />
                   </div>
                 ))}
               </div>
