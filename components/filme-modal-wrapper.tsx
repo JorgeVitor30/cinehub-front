@@ -2,15 +2,25 @@
 
 import { useState, useEffect } from "react"
 import type { FilmeDetalhado } from "./filme-modal"
-import { SafeDialog } from "./safe-dialog"
+import FilmeModal from "./filme-modal"
 
 interface FilmeModalWrapperProps {
   filme: FilmeDetalhado | null
   aberto: boolean
   onClose: () => void
+  isFavorited?: boolean
+  onRatingUpdate?: (movieId: string, newRating: number, newComment: string) => void
+  onRatingDelete?: (movieId: string) => void
 }
 
-export default function FilmeModalWrapper({ filme, aberto, onClose }: FilmeModalWrapperProps) {
+export default function FilmeModalWrapper({ 
+  filme, 
+  aberto, 
+  onClose, 
+  isFavorited = false,
+  onRatingUpdate,
+  onRatingDelete 
+}: FilmeModalWrapperProps) {
   const [isMounted, setIsMounted] = useState(false)
 
   useEffect(() => {
@@ -18,29 +28,19 @@ export default function FilmeModalWrapper({ filme, aberto, onClose }: FilmeModal
     return () => setIsMounted(false)
   }, [])
 
-  if (!isMounted || !filme) {
+  if (!isMounted) {
     return null
   }
 
   return (
-    <SafeDialog
-      open={aberto}
-      onOpenChange={(open) => !open && onClose()}
-      className="max-w-4xl bg-zinc-900 text-white border-zinc-800 p-0 overflow-hidden"
-    >
-      {filme && (
-        <>
-          {/* Conteúdo do modal */}
-          {/* Aqui você pode renderizar o conteúdo do FilmeModal diretamente */}
-          {/* Ou passar o filme para um componente interno */}
-          <div className="p-6">
-            <h2 className="text-2xl font-bold">{filme.titulo}</h2>
-            <p className="text-zinc-300 mt-2">{filme.descricao}</p>
-            {/* Resto do conteúdo do modal */}
-          </div>
-        </>
-      )}
-    </SafeDialog>
+    <FilmeModal
+      filme={filme}
+      aberto={aberto}
+      onClose={onClose}
+      isFavorited={isFavorited}
+      onRatingUpdate={onRatingUpdate}
+      onRatingDelete={onRatingDelete}
+    />
   )
 }
 

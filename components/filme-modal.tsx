@@ -321,9 +321,9 @@ export default function FilmeModal({ filme, aberto, onClose, isFavorited = false
 
           {/* Conteúdo com scroll */}
           <div className="flex-1 overflow-y-auto min-h-0">
-            <div className="relative -mt-20 px-6 pb-6">
+            <div className="relative px-6 pb-6 pt-8">
               {/* Metadados do filme */}
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-zinc-300 mb-4">
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-zinc-300 mb-6">
                 <div className="flex items-center">
                   <Clock className="h-4 w-4 mr-1" />
                   <span>{filme.duracao}</span>

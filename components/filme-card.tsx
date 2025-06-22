@@ -106,8 +106,8 @@ export default function FilmeCard({
         </div>
       </div>
 
-
-      {/* <button
+      {/* Botão de favoritar */}
+      <button
         onClick={handleFavoritar}
         disabled={isLoading}
         className={`absolute bottom-2 right-2 z-10 p-2 rounded-full transition-all ${
@@ -126,7 +126,7 @@ export default function FilmeCard({
             }`}
           />
         )}
-      </button> */}
+      </button>
 
       {/* Mensagem de erro (opcional) */}
       {error && (
