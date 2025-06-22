@@ -26,10 +26,10 @@ interface UsuarioCardProps {
 export default function UsuarioCard({ usuario, onClick }: UsuarioCardProps) {
   // Determinar a cor da compatibilidade
   const getCompatibilidadeCor = (valor: number) => {
-    if (valor >= 80) return "text-green-500"
-    if (valor >= 60) return "text-amber-500"
-    if (valor >= 40) return "text-orange-500"
-    return "text-red-500"
+    if (valor >= 70) return "text-green-400" // Verde claro
+    if (valor >= 50) return "text-green-600" // Verde escuro
+    if (valor >= 30) return "text-orange-500" // Laranja
+    return "text-red-500" // Vermelho
   }
 
   return (

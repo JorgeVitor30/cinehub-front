@@ -37,7 +37,7 @@ import {
 } from "@/components/ui/pagination"
 import UsuarioCard from "@/components/usuario-card"
 import UsuarioPerfilModal from "@/components/usuario-perfil-modal"
-import { userService, type ReadAllUserDto } from "@/app/services/userService"
+import { userService, type ReadAllUserDto, type User } from "@/app/services/userService"
 import { authService } from "@/app/services/authService"
 
 // Dados mockados para demonstração
@@ -72,18 +72,62 @@ export default function ComunidadePage() {
   const [paginaAtual, setPaginaAtual] = useState(1)
   const [usuarioSelecionado, setUsuarioSelecionado] = useState<string | null>(null)
   const [usuarioLogadoId, setUsuarioLogadoId] = useState<string | null>(null)
+  const [usuarioLogado, setUsuarioLogado] = useState<User | null>(null)
 
   // Número de usuários por página
   const USUARIOS_POR_PAGINA = 6
 
+  // Função para calcular compatibilidade baseada em filmes em comum e gêneros
+  const calcularCompatibilidadeFilmes = (usuarioAtual: ReadAllUserDto) => {
+    if (!usuarioLogado || !usuarioLogado.ratedList || usuarioLogado.ratedList.length === 0) {
+      return 85 // Valor padrão quando não há dados do usuário logado
+    }
+
+    // Cálculo de compatibilidade por filmes (peso 0.8)
+    const filmesUsuarioLogado = new Set(usuarioLogado.ratedList.map((rate: any) => rate.movie.id))
+    const filmesUsuarioAtual = new Set(usuarioAtual.ratedList.map(rate => rate.movie.id))
+    const filmesEmComum = new Set([...filmesUsuarioLogado].filter((id: string) => filmesUsuarioAtual.has(id)))
+    
+    const totalFilmes = Math.max(filmesUsuarioLogado.size, filmesUsuarioAtual.size)
+    const compatibilidadeFilmes = totalFilmes === 0 ? 85 : Math.round((filmesEmComum.size / totalFilmes) * 100)
+    
+    // Cálculo de compatibilidade por gêneros (peso 0.4)
+    // Pegar os 3 primeiros gêneros do usuário logado baseado em filmesAssistidosPorGenero
+    let generosUsuarioLogado: string[] = []
+    
+    if (usuarioLogado.filmesAssistidosPorGenero && usuarioLogado.filmesAssistidosPorGenero.length > 0) {
+      generosUsuarioLogado = usuarioLogado.filmesAssistidosPorGenero
+        .sort((a, b) => b.quantidade - a.quantidade)
+        .slice(0, 3)
+        .map(item => item.genero.trim()) // Remover espaços extras
+    } else if (usuarioLogado.genre) {
+      // Fallback: usar o gênero favorito se filmesAssistidosPorGenero estiver vazio
+      generosUsuarioLogado = [usuarioLogado.genre.trim()] // Remover espaços extras
+    }
+    
+    const generosUsuarioAtual = usuarioAtual.topGenres.slice(0, 3).map(genero => genero.trim()) // Remover espaços extras
+    
+    const generosEmComum = generosUsuarioLogado.filter((genero: string) => 
+      generosUsuarioAtual.some(generoAtual => 
+        genero.toLowerCase() === generoAtual.toLowerCase() // Comparação case-insensitive
+      )
+    )
+    const totalGeneros = Math.max(generosUsuarioLogado.length, generosUsuarioAtual.length)
+    const compatibilidadeGeneros = totalGeneros === 0 ? 85 : Math.round((generosEmComum.length / totalGeneros) * 100)
+    
+    // Calcular compatibilidade final com pesos
+    const compatibilidadeFinal = Math.round(
+      (compatibilidadeFilmes * 0.8) + (compatibilidadeGeneros * 0.3)
+    )
+    
+    // Garantir que a compatibilidade esteja entre 0 e 100
+    return Math.max(0, Math.min(100, compatibilidadeFinal))
+  }
+
   // Função para mapear ReadAllUserDto para o formato do UsuarioCard
   const mapearParaUsuarioCard = (user: ReadAllUserDto) => {
-    // Calcular compatibilidade baseada nos gêneros selecionados
-    const calcularCompatibilidade = () => {
-      if (generosSelecionados.length === 0) return 85 // Valor padrão quando não há filtros
-      const generosComuns = user.topGenres.filter(genero => generosSelecionados.includes(genero))
-      return Math.round((generosComuns.length / generosSelecionados.length) * 100)
-    }
+    // Calcular compatibilidade baseada nos filmes em comum
+    const compatibilidade = calcularCompatibilidadeFilmes(user)
 
     // Determinar nível baseado no número de avaliações
     const determinarNivel = (rateCount: number) => {
@@ -120,7 +164,7 @@ export default function ComunidadePage() {
       avaliacoes: user.rateCount,
       generosFavoritos: user.topGenres,
       filmesFavoritos: filmesFavoritos,
-      compatibilidade: calcularCompatibilidade(),
+      compatibilidade: compatibilidade,
       ultimaAtividade: calcularUltimaAtividade(user.createdAt),
       bio: user.description || `Cinéfilo com ${user.rateCount} avaliações. Gênero favorito: ${user.genre}.`,
       createdAt: user.createdAt,
@@ -139,6 +183,10 @@ export default function ComunidadePage() {
         const decodedUser = await authService.getUserFromToken()
         if (decodedUser?.nameid) {
           setUsuarioLogadoId(decodedUser.nameid)
+          
+          // Buscar dados completos do usuário logado
+          const usuarioLogadoData = await userService.getUserById(decodedUser.nameid)
+          setUsuarioLogado(usuarioLogadoData)
         }
         
         const usuariosData = await userService.getAllUsers()
@@ -171,14 +219,8 @@ export default function ComunidadePage() {
       generosSelecionados.length === 0 ||
       generosSelecionados.some((genero) => usuario.topGenres.includes(genero))
 
-    // Calcular compatibilidade baseada nos gêneros em comum
-    const calcularCompatibilidade = (userGenres: string[]) => {
-      if (generosSelecionados.length === 0) return 100
-      const generosComuns = userGenres.filter(genero => generosSelecionados.includes(genero))
-      return Math.round((generosComuns.length / generosSelecionados.length) * 100)
-    }
-    
-    const compatibilidade = calcularCompatibilidade(usuario.topGenres)
+    // Calcular compatibilidade baseada nos filmes em comum
+    const compatibilidade = calcularCompatibilidadeFilmes(usuario)
     const matchCompatibilidade = compatibilidade >= compatibilidadeMinima
 
     // Filtrar por avaliações mínimas
@@ -191,10 +233,8 @@ export default function ComunidadePage() {
   const usuariosOrdenados = [...usuariosFiltrados].sort((a, b) => {
     switch (ordenarPor) {
       case "compatibilidade":
-        const compatibilidadeA = generosSelecionados.length === 0 ? 100 : 
-          Math.round((a.topGenres.filter(g => generosSelecionados.includes(g)).length / generosSelecionados.length) * 100)
-        const compatibilidadeB = generosSelecionados.length === 0 ? 100 : 
-          Math.round((b.topGenres.filter(g => generosSelecionados.includes(g)).length / generosSelecionados.length) * 100)
+        const compatibilidadeA = calcularCompatibilidadeFilmes(a)
+        const compatibilidadeB = calcularCompatibilidadeFilmes(b)
         return compatibilidadeB - compatibilidadeA
       case "avaliacoes":
         return b.rateCount - a.rateCount
