@@ -45,7 +45,6 @@ interface UsuarioPerfilModalProps {
 
 export default function UsuarioPerfilModal({ usuario, aberto, onClose }: UsuarioPerfilModalProps) {
   const [activeTab, setActiveTab] = useState("perfil")
-  const [seguindo, setSeguindo] = useState(false)
 
   if (!usuario) {
     return null
@@ -111,32 +110,6 @@ export default function UsuarioPerfilModal({ usuario, aberto, onClose }: Usuario
                   <Star className="h-5 w-5 text-amber-500" />
                   <div className="text-lg font-bold">{usuario.avaliacoes}</div>
                   <div className="text-sm text-zinc-400">avaliações</div>
-                </div>
-
-                <div className="flex gap-2 mt-2 md:mt-0 md:ml-auto">
-                  <Button variant="outline" size="sm" className="border-zinc-700 hover:bg-zinc-800">
-                    <MessageCircle className="h-4 w-4 mr-2" />
-                    Mensagem
-                  </Button>
-                  <Button
-                    size="sm"
-                    className={
-                      seguindo ? "bg-zinc-700 hover:bg-zinc-600" : "bg-amber-500 hover:bg-amber-600 text-black"
-                    }
-                    onClick={() => setSeguindo(!seguindo)}
-                  >
-                    {seguindo ? (
-                      <>
-                        <UserPlus className="h-4 w-4 mr-2" />
-                        Seguindo
-                      </>
-                    ) : (
-                      <>
-                        <UserPlus className="h-4 w-4 mr-2" />
-                        Seguir
-                      </>
-                    )}
-                  </Button>
                 </div>
               </div>
             </div>
