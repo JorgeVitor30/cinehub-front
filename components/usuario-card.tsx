@@ -94,7 +94,7 @@ export default function UsuarioCard({ usuario, onClick }: UsuarioCardProps) {
         <div className="flex justify-between items-center text-xs text-zinc-400 pt-3 border-t border-zinc-700">
           <div className="flex items-center gap-1">
             <Clock className="h-3.5 w-3.5" />
-            <span>Ativo {usuario.ultimaAtividade}</span>
+            <span>Membro desde {usuario.ultimaAtividade}</span>
           </div>
           <div className="flex items-center gap-1">
             <Users className="h-3.5 w-3.5" />
