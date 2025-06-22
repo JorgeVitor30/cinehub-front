@@ -246,5 +246,50 @@ export const userService = {
       console.error("Erro ao buscar usuários:", error)
       return []
     }
+  },
+
+  async getUserPhotoById(id: string): Promise<string | null> {
+    try {
+      const token = authService.getToken()
+
+      const response = await fetch(`${API_URL}/users/${id}/photo`, {
+        method: 'GET',
+        headers: {
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
+      })
+
+      if (!response.ok) {
+        return null
+      }
+
+      const contentType = response.headers.get('content-type')
+      
+      // Se for uma imagem, tratar como blob
+      if (contentType && contentType.startsWith('image/')) {
+        const blob = await response.blob()
+        return URL.createObjectURL(blob)
+      }
+      
+      // Se não for imagem, tentar como texto (pode ser base64)
+      const text = await response.text()
+      
+      // Verificar se é base64
+      if (text.startsWith('data:image/') || text.startsWith('iVBORw0KGgo') || text.startsWith('PNG')) {
+        // Se já tem o prefixo data:image/, usar diretamente
+        if (text.startsWith('data:image/')) {
+          return text
+        }
+        // Se é PNG em base64 puro, adicionar o prefixo
+        if (text.startsWith('iVBORw0KGgo') || text.startsWith('PNG')) {
+          return `data:image/png;base64,${text}`
+        }
+      }
+      
+      return null
+    } catch (error) {
+      console.error("Erro ao buscar foto do usuário:", error)
+      return null
+    }
   }
 }

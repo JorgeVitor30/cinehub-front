@@ -73,6 +73,7 @@ export default function ComunidadePage() {
   const [usuarioSelecionado, setUsuarioSelecionado] = useState<string | null>(null)
   const [usuarioLogadoId, setUsuarioLogadoId] = useState<string | null>(null)
   const [usuarioLogado, setUsuarioLogado] = useState<User | null>(null)
+  const [userPhotos, setUserPhotos] = useState<Record<string, string>>({})
 
   // Número de usuários por página
   const USUARIOS_POR_PAGINA = 6
@@ -156,10 +157,41 @@ export default function ComunidadePage() {
       .slice(0, 5)
       .map(rate => rate.movie.title)
 
+    // Determinar a URL da foto: primeiro verificar se já está no userPhotos, depois se está no campo photo, por último usar placeholder
+    let avatarUrl = "/placeholder.svg?height=200&width=200"
+    
+    console.log(`Processando foto para usuário ${user.id}:`, {
+      userPhoto: user.photo,
+      userPhotosState: userPhotos[user.id],
+      photoStartsWithData: user.photo?.startsWith('data:image/'),
+      photoStartsWithIVB: user.photo?.startsWith('iVBORw0KGgo'),
+      photoStartsWithPNG: user.photo?.startsWith('PNG')
+    })
+    
+    if (userPhotos[user.id]) {
+      avatarUrl = userPhotos[user.id]
+      console.log(`Usando foto do estado para ${user.id}:`, avatarUrl)
+    } else if (user.photo) {
+      // Verificar se a foto já está em formato base64
+      if (user.photo.startsWith('data:image/') || user.photo.startsWith('iVBORw0KGgo') || user.photo.startsWith('PNG')) {
+        if (user.photo.startsWith('data:image/')) {
+          avatarUrl = user.photo
+          console.log(`Usando foto base64 com prefixo para ${user.id}`)
+        } else if (user.photo.startsWith('iVBORw0KGgo') || user.photo.startsWith('PNG')) {
+          avatarUrl = `data:image/png;base64,${user.photo}`
+          console.log(`Usando foto base64 sem prefixo para ${user.id}`)
+        }
+      } else {
+        console.log(`Foto não está em formato base64 para ${user.id}:`, user.photo?.substring(0, 50))
+      }
+    } else {
+      console.log(`Nenhuma foto encontrada para ${user.id}, usando placeholder`)
+    }
+
     return {
       id: user.id,
       nome: user.name,
-      avatar: user.photo || "/placeholder.svg?height=200&width=200",
+      avatar: avatarUrl,
       nivel: determinarNivel(user.rateCount),
       avaliacoes: user.rateCount,
       generosFavoritos: user.topGenres,
@@ -191,10 +223,38 @@ export default function ComunidadePage() {
         
         const usuariosData = await userService.getAllUsers()
         
+        // Debug: verificar como os dados estão chegando
+        console.log('Dados dos usuários:', usuariosData)
+        console.log('Exemplo de usuário com foto:', usuariosData.find(u => u.photo))
+        
         // Filtrar o usuário logado da lista
         const usuariosFiltrados = usuariosData.filter(usuario => usuario.id !== decodedUser?.nameid)
         
         setUsuarios(usuariosFiltrados)
+
+        // Carregar fotos dos usuários
+        const photos: Record<string, string> = {}
+        for (const usuario of usuariosFiltrados) {
+          // Só carregar foto se não estiver disponível no campo photo
+          if (!usuario.photo || (!usuario.photo.startsWith('data:image/') && !usuario.photo.startsWith('iVBORw0KGgo') && !usuario.photo.startsWith('PNG'))) {
+            console.log(`Tentando carregar foto para usuário ${usuario.id} via endpoint`)
+            try {
+              const photoUrl = await userService.getUserPhotoById(usuario.id)
+              if (photoUrl) {
+                photos[usuario.id] = photoUrl
+                console.log(`Foto carregada com sucesso para ${usuario.id}:`, photoUrl.substring(0, 50))
+              } else {
+                console.log(`Nenhuma foto retornada para ${usuario.id}`)
+              }
+            } catch (error) {
+              console.error(`Erro ao carregar foto do usuário ${usuario.id}:`, error)
+            }
+          } else {
+            console.log(`Usuário ${usuario.id} já tem foto no campo photo, pulando carregamento`)
+          }
+        }
+        console.log('Fotos carregadas:', Object.keys(photos))
+        setUserPhotos(photos)
       } catch (err) {
         console.error('Erro ao carregar usuários:', err)
         setError('Erro ao carregar usuários. Tente novamente.')
@@ -205,6 +265,18 @@ export default function ComunidadePage() {
 
     fetchUsuarios()
   }, [])
+
+  // Cleanup das URLs das fotos quando o componente for desmontado
+  useEffect(() => {
+    return () => {
+      // Liberar as URLs das fotos para evitar vazamentos de memória
+      Object.values(userPhotos).forEach(url => {
+        if (url.startsWith('blob:')) {
+          URL.revokeObjectURL(url)
+        }
+      })
+    }
+  }, [userPhotos])
 
   // Aplicar filtros
   const usuariosFiltrados = (usuarios || []).filter((usuario) => {
