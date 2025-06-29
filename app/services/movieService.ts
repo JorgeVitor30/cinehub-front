@@ -270,16 +270,58 @@ export const movieService = {
     const response = await fetch(`${API_BASE_URL}/movies`, {
       method: 'POST',
       headers: {
+        'Authorization': `Bearer ${token ?? ''}`,
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token ?? ''}`
       },
-      body: JSON.stringify(movie)
+      body: JSON.stringify(movie),
     })
 
     if (!response.ok) {
-      throw new Error('Erro ao criar filme')
+      throw new Error('Falha ao criar filme')
     }
 
-    return response.json()
+    const data = await response.json()
+    return {
+      ...data,
+      voteAverage: extractValue(data.voteAverage),
+      revenue: extractValue(data.revenue),
+      budget: extractValue(data.budget),
+      popularity: extractValue(data.popularity)
+    }
+  },
+
+  async getRecommendedMovies(userId: string): Promise<Movie[]> {
+    try {
+      const token = document.cookie
+        .split('; ')
+        .find(row => row.startsWith('auth_token='))
+        ?.split('=')[1]
+
+      const response = await fetch(`${API_BASE_URL}/movies/recommend/${userId}`, {
+        headers: {
+          'Authorization': `Bearer ${token ?? ''}`,
+          'Content-Type': 'application/json'
+        }
+      })
+      
+      if (!response.ok) {
+        const errorText = await response.text()
+        throw new Error(`Erro na requisição: ${response.status} - ${errorText}`)
+      }
+
+      const data = await response.json()
+
+      // Mapear os valores numéricos para cada filme
+      return data.map((movie: Movie) => ({
+        ...movie,
+        voteAverage: extractValue(movie.voteAverage),
+        revenue: extractValue(movie.revenue),
+        budget: extractValue(movie.budget),
+        popularity: extractValue(movie.popularity)
+      }))
+    } catch (error) {
+      console.error('Erro ao buscar filmes recomendados:', error)
+      throw error
+    }
   }
 }

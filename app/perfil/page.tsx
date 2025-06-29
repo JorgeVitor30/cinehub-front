@@ -42,83 +42,9 @@ import { useState, useEffect } from "react"
 import { userService } from "@/app/services/userService"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
-import { type Movie } from "@/app/services/movieService"
+import { type Movie, movieService } from "@/app/services/movieService"
 import { type User } from "@/app/services/userService"
 import { rateService } from "@/app/services/rateService"
-
-// Filmes recomendados mockados
-const filmesRecomendadosMock = [
-  {
-    id: "21",
-    titulo: "Vingadores: Ultimato",
-    capa: "https://image.tmdb.org/t/p/w500/q6725aR8Zs4IwGMXzZT8aC8lh41.jpg",
-    avaliacao: 8.4,
-    ano: 2019,
-    generos: ["Ação", "Aventura", "Ficção Científica"],
-    similaridade: 92,
-    motivo: "Baseado em sua avaliação de Inception",
-  },
-  {
-    id: "18",
-    titulo: "Duna: Parte 2",
-    capa: "https://image.tmdb.org/t/p/w500//oYuLEt3zVCKq57qu2F8dT7NIa6f.jpg",
-    avaliacao: 8.6,
-    ano: 2024,
-    generos: ["Ficção Científica", "Aventura"],
-    similaridade: 89,
-    motivo: "Baseado em sua avaliação de Interestellar",
-  },
-  {
-    id: "23",
-    titulo: "Oppenheimer",
-    capa: "https://image.tmdb.org/t/p/w500/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg",
-    avaliacao: 8.2,
-    ano: 2023,
-    generos: ["Drama", "História"],
-    similaridade: 85,
-    motivo: "Baseado em filmes históricos que você assistiu",
-  },
-  {
-    id: "24",
-    titulo: "Blade Runner 2049",
-    capa: "https://image.tmdb.org/t/p/w500/gajva2L0rPYkEWjzgFlBXCAVBE5.jpg",
-    avaliacao: 8.0,
-    ano: 2017,
-    generos: ["Ficção Científica", "Drama"],
-    similaridade: 82,
-    motivo: "Baseado em sua avaliação de Matrix",
-  },
-  {
-    id: "25",
-    titulo: "Bacurau",
-    capa: "https://image.tmdb.org/t/p/w500/hu5RpvEdLjJ2sLGkAMzRjoNWbMj.jpg",
-    avaliacao: 7.8,
-    ano: 2019,
-    generos: ["Mistério", "Faroeste", "Thriller"],
-    similaridade: 78,
-    motivo: "Baseado em sua avaliação de Parasita",
-  },
-  {
-    id: "26",
-    titulo: "Divertida Mente 2",
-    capa: "https://image.tmdb.org/t/p/w500/7qwE5ZQDxwAqYHJMIAK9dtxJlXf.jpg",
-    avaliacao: 7.9,
-    ano: 2023,
-    generos: ["Animação", "Comédia", "Família"],
-    similaridade: 75,
-    motivo: "Baseado em filmes de animação que você gostou",
-  },
-  {
-    id: "27",
-    titulo: "Duna",
-    capa: "https://image.tmdb.org/t/p/w500/s9E9W77HS8zEQvsrpz5aEUTKnvD.jpg",
-    avaliacao: 7.9,
-    ano: 2021,
-    generos: ["Ficção Científica", "Aventura"],
-    similaridade: 90,
-    motivo: "Baseado em sua avaliação de O Senhor dos Anéis",
-  },
-]
 
 // Função para mapear os filmes da API para o formato esperado pelo componente
 const mapMovieToFilmeDetalhado = (movie: Movie, userRating?: { id?: string, rate: number, comment: string }): FilmeDetalhado => {
@@ -159,6 +85,9 @@ export default function PerfilPage() {
   const [userData, setUserData] = useState<User | null>(null)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const [filmesRecomendados, setFilmesRecomendados] = useState<Movie[]>([])
+  const [loadingRecomendacoes, setLoadingRecomendacoes] = useState(false)
+  const [erroRecomendacoes, setErroRecomendacoes] = useState<string | null>(null)
 
   // Função para atualizar a avaliação na lista
   const handleRatingUpdate = async (movieId: string, newRating: number, newComment: string) => {
@@ -281,6 +210,29 @@ export default function PerfilPage() {
     return filmeEncontrado ? mapMovieToFilmeDetalhado(filmeEncontrado) : null
   }
 
+  // Função para carregar filmes recomendados
+  const carregarFilmesRecomendados = async (userId: string) => {
+    try {
+      setLoadingRecomendacoes(true)
+      setErroRecomendacoes(null)
+      const recomendacoes = await movieService.getRecommendedMovies(userId)
+      setFilmesRecomendados(recomendacoes)
+    } catch (error: any) {
+      console.error('Erro ao carregar filmes recomendados:', error)
+      
+      // Verificar se é um erro 400 ou 404
+      if (error.message && (error.message.includes('400') || error.message.includes('404'))) {
+        setErroRecomendacoes('Para receber recomendações personalizadas, você precisa avaliar pelo menos 10 filmes.')
+      } else {
+        setErroRecomendacoes('Erro ao carregar recomendações. Tente novamente mais tarde.')
+      }
+      
+      setFilmesRecomendados([])
+    } finally {
+      setLoadingRecomendacoes(false)
+    }
+  }
+
   // Função de Visualizar Photo
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -319,6 +271,8 @@ export default function PerfilPage() {
         if (decodedUser?.nameid) {
           const user = await userService.getUserById(decodedUser.nameid)
           setUserData(user)
+          
+          await carregarFilmesRecomendados(decodedUser.nameid)
         }
       } catch (error) {
         console.error("Erro ao buscar dados do usuário:", error)
@@ -335,7 +289,7 @@ export default function PerfilPage() {
 
   // Verificar se deve mostrar scroll
   const mostrarScrollFavoritos = (userData?.favorites?.length ?? 0) > 7
-  const mostrarScrollRecomendados = filmesRecomendadosMock.length > 7
+  const mostrarScrollRecomendados = filmesRecomendados.length > 7
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-black to-zinc-900 text-white">
@@ -693,43 +647,77 @@ export default function PerfilPage() {
                         </CardDescription>
                       </div>
                       <Badge className="bg-amber-500 text-black hover:bg-amber-600">
-                        {filmesRecomendadosMock.length} filmes
+                        {filmesRecomendados.length} filmes
                       </Badge>
                     </div>
                   </CardHeader>
                   <CardContent>
-                    {filmesRecomendadosMock.length > 0 ? (
+                    {loadingRecomendacoes ? (
+                      <div className="text-center py-8">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500 mx-auto mb-4"></div>
+                        <p className="text-zinc-400">Carregando recomendações...</p>
+                      </div>
+                    ) : erroRecomendacoes ? (
+                      <div className="text-center py-8">
+                        <div className="bg-zinc-800 rounded-lg p-8 max-w-md mx-auto">
+                          <div className="text-zinc-600 mb-4">
+                            <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2m-9 0h10m-10 0a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V6a2 2 0 00-2-2" />
+                            </svg>
+                          </div>
+                          <h3 className="text-lg font-semibold mb-2">Recomendações indisponíveis</h3>
+                          <p className="text-zinc-400 text-sm">
+                            {erroRecomendacoes}
+                          </p>
+                          {erroRecomendacoes.includes('10 filmes') && (
+                            <div className="mt-4 p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
+                              <p className="text-amber-500 text-sm font-medium">
+                                Filmes avaliados: {userData?.ratedList?.length || 0}/10
+                              </p>
+                              <div className="mt-2">
+                                <div className="w-full bg-zinc-700 rounded-full h-2">
+                                  <div 
+                                    className="bg-amber-500 h-2 rounded-full transition-all duration-300"
+                                    style={{ width: `${Math.min(((userData?.ratedList?.length || 0) / 10) * 100, 100)}%` }}
+                                  ></div>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ) : filmesRecomendados.length > 0 ? (
                       <div
                         className={`space-y-4 ${
                           mostrarScrollRecomendados ? "max-h-[600px] overflow-y-auto pr-2 custom-scrollbar" : ""
                         }`}
                       >
-                        {filmesRecomendadosMock.map((filme) => (
+                        {filmesRecomendados.map((filme) => (
                           <div
                             key={filme.id}
                             className="flex items-center gap-4 p-3 rounded-lg bg-zinc-800 hover:bg-zinc-700 transition-colors cursor-pointer"
-                            onClick={() => setFilmeAberto(encontrarFilmeDetalhado(filme.id))}
+                            onClick={() => setFilmeAberto(mapMovieToFilmeDetalhado(filme))}
                           >
                             <div className="relative w-16 h-24 flex-shrink-0 overflow-hidden rounded">
                               <Image
-                                src={filme.capa || "/placeholder.svg"}
-                                alt={filme.titulo}
+                                src={filme.posterPhotoUrl || "/placeholder.svg"}
+                                alt={filme.title}
                                 fill
                                 className="object-cover"
                               />
                             </div>
                             <div className="flex-1 min-w-0">
-                              <h3 className="font-semibold text-white truncate">{filme.titulo}</h3>
+                              <h3 className="font-semibold text-white truncate">{filme.title}</h3>
                               <div className="flex items-center gap-2 text-sm text-zinc-400">
-                                <span>{filme.ano}</span>
+                                <span>{new Date(filme.releaseDate).getFullYear()}</span>
                                 <span>•</span>
                                 <span className="flex items-center">
                                   <Star className="h-3.5 w-3.5 text-amber-500 fill-amber-500 mr-1" />
-                                  {filme.avaliacao.toFixed(1)}
+                                  {typeof filme.voteAverage === 'number' ? filme.voteAverage.toFixed(1) : filme.voteAverage.parsedValue.toFixed(1)}
                                 </span>
                               </div>
                               <div className="flex flex-wrap gap-1 mt-1">
-                                {filme.generos.slice(0, 2).map((genero, index) => (
+                                {filme.genres.split(", ").slice(0, 2).map((genero: string, index: number) => (
                                   <Badge
                                     key={index}
                                     variant="outline"
@@ -739,12 +727,9 @@ export default function PerfilPage() {
                                   </Badge>
                                 ))}
                               </div>
-                              <p className="text-xs text-amber-500/80 mt-1">{filme.motivo}</p>
+                              <p className="text-xs text-amber-500/80 mt-1 line-clamp-2">{filme.overview}</p>
                             </div>
                             <div className="flex-shrink-0 flex gap-2">
-                              <div className="bg-amber-500/20 text-amber-500 px-3 py-1 rounded-full text-sm font-bold">
-                                {filme.similaridade}%
-                              </div>
                             </div>
                           </div>
                         ))}
@@ -754,7 +739,7 @@ export default function PerfilPage() {
                         <Sparkles className="h-12 w-12 mx-auto text-zinc-700 mb-3" />
                         <h3 className="text-lg font-medium text-zinc-400">Nenhuma recomendação disponível</h3>
                         <p className="text-zinc-500 text-sm mt-1">
-                          Avalie mais filmes para receber recomendações personalizadas
+                          Nenhuma recomendação foi encontrada para você no momento.
                         </p>
                       </div>
                     )}
