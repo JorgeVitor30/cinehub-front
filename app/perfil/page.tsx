@@ -17,6 +17,9 @@ import {
   Upload,
   Sparkles,
   FileText,
+  Send,
+  Bot,
+  User as UserIcon,
 } from "lucide-react"
 import Navbar from "@/components/navbar"
 import { Button } from "@/components/ui/button"
@@ -26,6 +29,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
+import { Textarea } from "@/components/ui/textarea"
 import FilmeModal, { type FilmeDetalhado } from "@/components/filme-modal"
 import EditarPerfilModal from "@/components/editar-perfil-modal"
 import AlterarSenhaModal from "@/components/alterar-senha-modal"
@@ -88,6 +92,23 @@ export default function PerfilPage() {
   const [filmesRecomendados, setFilmesRecomendados] = useState<Movie[]>([])
   const [loadingRecomendacoes, setLoadingRecomendacoes] = useState(false)
   const [erroRecomendacoes, setErroRecomendacoes] = useState<string | null>(null)
+  const [chatMessages, setChatMessages] = useState<Array<{ type: 'user' | 'bot', content: string }>>([
+    {
+      type: 'bot',
+      content: `Olá! 👋 Sou o assistente de filmes do CineHub. 
+
+Posso te ajudar com:
+🎬 Recomendações personalizadas de filmes
+📝 Informações sobre filmes, diretores e atores  
+🎭 Análises e críticas cinematográficas
+🎪 Dicas sobre gêneros e tendências
+💬 Discussões sobre cinema e cultura pop
+
+Como posso te ajudar hoje?`
+    }
+  ])
+  const [chatInput, setChatInput] = useState('')
+  const [loadingChat, setLoadingChat] = useState(false)
 
   // Função para atualizar a avaliação na lista
   const handleRatingUpdate = async (movieId: string, newRating: number, newComment: string) => {
@@ -233,6 +254,75 @@ export default function PerfilPage() {
     }
   }
 
+  // Função para enviar mensagem para o chatbot
+  const enviarMensagemChat = async (mensagem: string) => {
+    if (!mensagem.trim()) return
+
+    // Adicionar mensagem do usuário
+    const novaMensagem = { type: 'user' as const, content: mensagem }
+    setChatMessages(prev => [...prev, novaMensagem])
+    setChatInput('')
+    setLoadingChat(true)
+
+    try {
+      // Obter token de autenticação
+      const token = document.cookie
+        .split('; ')
+        .find(row => row.startsWith('auth_token='))
+        ?.split('=')[1]
+
+      const response = await fetch('http://localhost:5129/api/Gemini/generate', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token ?? ''}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          prompt: mensagem
+        })
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        // Tratar erros específicos
+        if (data.error) {
+          if (data.error.includes('Configuração da API não encontrada')) {
+            throw new Error('Serviço de IA temporariamente indisponível. Tente novamente mais tarde.')
+          } else if (data.error.includes('Erro na API do Gemini')) {
+            throw new Error('Erro na comunicação com o serviço de IA. Tente novamente.')
+          } else {
+            throw new Error(data.error)
+          }
+        } else {
+          throw new Error('Erro na requisição do chatbot')
+        }
+      }
+      
+      // Verificar se a resposta contém o campo response
+      if (!data.response) {
+        throw new Error('Resposta inválida do serviço de IA')
+      }
+      
+      // Adicionar resposta do bot
+      const respostaBot = { type: 'bot' as const, content: data.response }
+      setChatMessages(prev => [...prev, respostaBot])
+    } catch (error) {
+      console.error('Erro ao enviar mensagem para o chatbot:', error)
+      
+      let mensagemErro = 'Desculpe, não consegui processar sua mensagem. Tente novamente.'
+      
+      if (error instanceof Error) {
+        mensagemErro = error.message
+      }
+      
+      const erroBot = { type: 'bot' as const, content: mensagemErro }
+      setChatMessages(prev => [...prev, erroBot])
+    } finally {
+      setLoadingChat(false)
+    }
+  }
+
   // Função de Visualizar Photo
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -281,6 +371,14 @@ export default function PerfilPage() {
 
     fetchUser()
   }, [])
+
+  // Scroll automático para a última mensagem do chat
+  useEffect(() => {
+    const chatContainer = document.querySelector('.chat-messages')
+    if (chatContainer) {
+      chatContainer.scrollTop = chatContainer.scrollHeight
+    }
+  }, [chatMessages])
 
   if (!userData) {
     return <div>Carregando dados do usuário...</div>
@@ -743,6 +841,91 @@ export default function PerfilPage() {
                         </p>
                       </div>
                     )}
+
+                    {/* Chatbot de Recomendações */}
+                    <div className="mt-8">
+                      <Card className="bg-zinc-800 border-zinc-700">
+                        <CardHeader className="pb-3">
+                          <CardTitle className="text-lg flex items-center">
+                            <Bot className="h-5 w-5 mr-2 text-amber-500" />
+                            Assistente de Recomendações
+                          </CardTitle>
+                          <CardDescription className="text-zinc-400">
+                            Faça perguntas sobre filmes e receba recomendações personalizadas
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          {/* Área de mensagens */}
+                          <div className="h-64 overflow-y-auto mb-4 p-3 bg-zinc-900 rounded-lg border border-zinc-700 chat-messages">
+                            <div className="space-y-3">
+                              {chatMessages.map((message, index) => (
+                                <div
+                                  key={index}
+                                  className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
+                                >
+                                  <div
+                                    className={`max-w-[80%] p-3 rounded-lg ${
+                                      message.type === 'user'
+                                        ? 'bg-amber-500 text-black'
+                                        : 'bg-zinc-700 text-white'
+                                    }`}
+                                  >
+                                    <div className="flex items-start gap-2">
+                                      {message.type === 'bot' && (
+                                        <Bot className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                                      )}
+                                      <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                                      {message.type === 'user' && (
+                                        <UserIcon className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                              {loadingChat && (
+                                <div className="flex justify-start">
+                                  <div className="bg-zinc-700 text-white p-3 rounded-lg">
+                                    <div className="flex items-center gap-2">
+                                      <Bot className="h-4 w-4" />
+                                      <div className="flex space-x-1">
+                                        <div className="w-2 h-2 bg-zinc-400 rounded-full animate-bounce"></div>
+                                        <div className="w-2 h-2 bg-zinc-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                                        <div className="w-2 h-2 bg-zinc-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Input de mensagem */}
+                          <div className="flex gap-2">
+                            <Textarea
+                              placeholder="Digite sua pergunta sobre filmes..."
+                              value={chatInput}
+                              onChange={(e) => setChatInput(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' && !e.shiftKey) {
+                                  e.preventDefault()
+                                  enviarMensagemChat(chatInput)
+                                }
+                              }}
+                              className="flex-1 bg-zinc-900 border-zinc-700 text-white placeholder:text-zinc-400 resize-none"
+                              rows={2}
+                              disabled={loadingChat}
+                            />
+                            <Button
+                              onClick={() => enviarMensagemChat(chatInput)}
+                              disabled={loadingChat || !chatInput.trim()}
+                              className="bg-amber-500 hover:bg-amber-600 text-black"
+                            >
+                              <Send className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
                   </CardContent>
                 </Card>
               </TabsContent>
