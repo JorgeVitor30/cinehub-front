@@ -586,7 +586,7 @@ Como posso te ajudar hoje?`
                   Recomendações
                 </TabsTrigger>
                 <TabsTrigger
-                  value="estatísticas"
+                  value="estatisticas"
                   className="data-[state=active]:bg-amber-500 data-[state=active]:text-black"
                 >
                   Estatísticas
@@ -932,61 +932,420 @@ Como posso te ajudar hoje?`
 
               {/* Aba de Estatísticas */}
               <TabsContent value="estatisticas" className="space-y-6">
-                <Card className="bg-zinc-900 border-zinc-800 text-white">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-xl">Estatísticas de Filmes</CardTitle>
-                    <CardDescription className="text-zinc-400">Seus hábitos de visualização</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    <div>
-                      <div className="flex justify-between items-center mb-2">
-                        <h3 className="text-sm font-medium">Progresso de filmes assistidos</h3>
-                        <span className="text-xs text-zinc-400">
-                          {userData.ratedList?.length || 0} filmes avaliados
-                        </span>
+                {/* Cards de Resumo */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <Card className="bg-zinc-900 border-zinc-800 text-white">
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-zinc-400">Total Avaliados</p>
+                          <p className="text-2xl font-bold text-white">{userData.ratedList?.length || 0}</p>
+                        </div>
+                        <div className="bg-amber-500/20 p-3 rounded-full">
+                          <Star className="h-6 w-6 text-amber-500" />
+                        </div>
                       </div>
-                      <Progress
-                        value={userData.totalFilmes ? ((userData.ratedList?.length || 0) / userData.totalFilmes) * 100 : 0}
-                        className="h-2 bg-zinc-700"
-                      />
-                      <p className="text-xs text-zinc-500 mt-1">
-                        Você assistiu {userData.totalFilmes ? (((userData.ratedList?.length || 0) / userData.totalFilmes) * 100).toFixed(1) : 0}
-                        % de todos os filmes
-                      </p>
-                    </div>
+                    </CardContent>
+                  </Card>
 
-                    <div>
-                      <h3 className="text-sm font-medium mb-3">Filmes por gênero</h3>
-                      <div className="space-y-3">
-                        {userData.filmesAssistidosPorGenero?.map((item) => (
-                          <div key={item.genero}>
-                            <div className="flex justify-between items-center mb-1">
-                              <span className="text-sm">{item.genero}</span>
-                              <span className="text-xs text-zinc-400">{item.quantidade} filmes</span>
-                            </div>
-                            <Progress
-                              value={((item.quantidade / (userData.ratedList?.length || 1)) * 100)}
-                              className="h-2 bg-zinc-700"
-                            />
+                  <Card className="bg-zinc-900 border-zinc-800 text-white">
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-zinc-400">Favoritos</p>
+                          <p className="text-2xl font-bold text-white">{userData.favorites?.length || 0}</p>
+                        </div>
+                        <div className="bg-red-500/20 p-3 rounded-full">
+                          <Heart className="h-6 w-6 text-red-500" />
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="bg-zinc-900 border-zinc-800 text-white">
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-zinc-400">Ranking</p>
+                          <p className="text-2xl font-bold text-white">#{userData.rankingUser?.currentRank || '-'}</p>
+                        </div>
+                        <div className="bg-blue-500/20 p-3 rounded-full">
+                          <BarChart3 className="h-6 w-6 text-blue-500" />
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="bg-zinc-900 border-zinc-800 text-white">
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-zinc-400">Avaliação Média</p>
+                          <p className="text-2xl font-bold text-white">
+                            {userData.ratedList && userData.ratedList.length > 0
+                              ? (userData.ratedList.reduce((acc, rated) => acc + rated.rate, 0) / userData.ratedList.length).toFixed(1)
+                              : '0.0'}
+                          </p>
+                        </div>
+                        <div className="bg-green-500/20 p-3 rounded-full">
+                          <div className="h-6 w-6 text-green-500 flex items-center justify-center">
+                            <span className="text-sm font-bold">★</span>
                           </div>
-                        )) || (
-                          <p className="text-sm text-zinc-500">Estatísticas por gênero em breve</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Gráficos */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Distribuição de Avaliações */}
+                  <Card className="bg-zinc-900 border-zinc-800 text-white">
+                    <CardHeader>
+                      <CardTitle className="text-lg">Distribuição de Avaliações</CardTitle>
+                      <CardDescription className="text-zinc-400">
+                        Como você distribui suas notas
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      {userData.ratedList && userData.ratedList.length > 0 ? (
+                        <div className="space-y-3">
+                          {[10, 9, 8, 7, 6, 5, 4, 3, 2, 1].map((rating) => {
+                            const count = userData.ratedList?.filter(rated => rated.rate === rating).length || 0
+                            const percentage = userData.ratedList ? (count / userData.ratedList.length) * 100 : 0
+                            
+                            return (
+                              <div key={rating} className="flex items-center gap-3">
+                                <div className="w-8 text-sm font-medium text-zinc-400">{rating}</div>
+                                <div className="flex-1">
+                                  <div className="w-full bg-zinc-800 rounded-full h-2">
+                                    <div 
+                                      className="bg-gradient-to-r from-amber-500 to-red-500 h-2 rounded-full transition-all duration-500"
+                                      style={{ width: `${percentage}%` }}
+                                    ></div>
+                                  </div>
+                                </div>
+                                <div className="w-12 text-sm text-zinc-400 text-right">{count}</div>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      ) : (
+                        <div className="text-center py-8">
+                          <Star className="h-12 w-12 mx-auto text-zinc-700 mb-3" />
+                          <p className="text-zinc-400">Nenhuma avaliação ainda</p>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  {/* Gêneros Mais Avaliados */}
+                  <Card className="bg-zinc-900 border-zinc-800 text-white">
+                    <CardHeader>
+                      <CardTitle className="text-lg">Gêneros Favoritos</CardTitle>
+                      <CardDescription className="text-zinc-400">
+                        Baseado nos filmes que você avaliou
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      {userData.ratedList && userData.ratedList.length > 0 ? (
+                        <div className="space-y-3">
+                          {(() => {
+                            const genreCount: { [key: string]: number } = {}
+                            
+                            userData.ratedList.forEach(rated => {
+                              const genres = rated.movie.genres.split(',').map(g => g.trim())
+                              genres.forEach(genre => {
+                                genreCount[genre] = (genreCount[genre] || 0) + 1
+                              })
+                            })
+                            
+                            const sortedGenres = Object.entries(genreCount)
+                              .sort(([,a], [,b]) => b - a)
+                              .slice(0, 8)
+                            
+                            return sortedGenres.map(([genre, count]) => {
+                              const percentage = (count / userData.ratedList!.length) * 100
+                              
+                              return (
+                                <div key={genre} className="flex items-center gap-3">
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex justify-between items-center mb-1">
+                                      <span className="text-sm font-medium truncate">{genre}</span>
+                                      <span className="text-xs text-zinc-400">{count}</span>
+                                    </div>
+                                    <div className="w-full bg-zinc-800 rounded-full h-2">
+                                      <div 
+                                        className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full transition-all duration-500"
+                                        style={{ width: `${percentage}%` }}
+                                      ></div>
+                                    </div>
+                                  </div>
+                                </div>
+                              )
+                            })
+                          })()}
+                        </div>
+                      ) : (
+                        <div className="text-center py-8">
+                          <Film className="h-12 w-12 mx-auto text-zinc-700 mb-3" />
+                          <p className="text-zinc-400">Nenhum gênero analisado</p>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Análise Temporal */}
+                <Card className="bg-zinc-900 border-zinc-800 text-white">
+                  <CardHeader>
+                    <CardTitle className="text-lg">Análise Temporal</CardTitle>
+                    <CardDescription className="text-zinc-400">
+                      Sua atividade ao longo do tempo
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      {/* Décadas */}
+                      <div>
+                        <h4 className="text-sm font-medium mb-3">Filmes por Década</h4>
+                        {userData.ratedList && userData.ratedList.length > 0 ? (
+                          <div className="space-y-2">
+                            {(() => {
+                              const decadeCount: { [key: string]: number } = {}
+                              
+                              userData.ratedList.forEach(rated => {
+                                const year = new Date(rated.movie.releaseDate).getFullYear()
+                                const decade = Math.floor(year / 10) * 10
+                                const decadeLabel = `${decade}s`
+                                decadeCount[decadeLabel] = (decadeCount[decadeLabel] || 0) + 1
+                              })
+                              
+                              return Object.entries(decadeCount)
+                                .sort(([a], [b]) => parseInt(a) - parseInt(b))
+                                .map(([decade, count]) => (
+                                  <div key={decade} className="flex justify-between items-center">
+                                    <span className="text-sm text-zinc-400">{decade}</span>
+                                    <Badge variant="outline" className="bg-zinc-800 border-zinc-700">
+                                      {count}
+                                    </Badge>
+                                  </div>
+                                ))
+                            })()}
+                          </div>
+                        ) : (
+                          <p className="text-zinc-500 text-sm">Nenhum dado disponível</p>
+                        )}
+                      </div>
+
+                      {/* Anos Recentes */}
+                      <div>
+                        <h4 className="text-sm font-medium mb-3">Últimos 5 Anos</h4>
+                        {userData.ratedList && userData.ratedList.length > 0 ? (
+                          <div className="space-y-2">
+                            {(() => {
+                              const currentYear = new Date().getFullYear()
+                              const yearCount: { [key: number]: number } = {}
+                              
+                              userData.ratedList.forEach(rated => {
+                                const year = new Date(rated.movie.releaseDate).getFullYear()
+                                if (year >= currentYear - 4) {
+                                  yearCount[year] = (yearCount[year] || 0) + 1
+                                }
+                              })
+                              
+                              return Array.from({ length: 5 }, (_, i) => currentYear - 4 + i)
+                                .map(year => (
+                                  <div key={year} className="flex justify-between items-center">
+                                    <span className="text-sm text-zinc-400">{year}</span>
+                                    <Badge variant="outline" className="bg-zinc-800 border-zinc-700">
+                                      {yearCount[year] || 0}
+                                    </Badge>
+                                  </div>
+                                ))
+                            })()}
+                          </div>
+                        ) : (
+                          <p className="text-zinc-500 text-sm">Nenhum dado disponível</p>
+                        )}
+                      </div>
+
+                      {/* Média por Ano */}
+                      <div>
+                        <h4 className="text-sm font-medium mb-3">Avaliação Média por Ano</h4>
+                        {userData.ratedList && userData.ratedList.length > 0 ? (
+                          <div className="space-y-2">
+                            {(() => {
+                              const yearRatings: { [key: number]: number[] } = {}
+                              
+                              userData.ratedList.forEach(rated => {
+                                const year = new Date(rated.movie.releaseDate).getFullYear()
+                                if (!yearRatings[year]) yearRatings[year] = []
+                                yearRatings[year].push(rated.rate)
+                              })
+                              
+                              return Object.entries(yearRatings)
+                                .sort(([a], [b]) => parseInt(b) - parseInt(a))
+                                .slice(0, 5)
+                                .map(([year, ratings]) => {
+                                  const average = (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(1)
+                                  return (
+                                    <div key={year} className="flex justify-between items-center">
+                                      <span className="text-sm text-zinc-400">{year}</span>
+                                      <div className="flex items-center gap-1">
+                                        <Star className="h-3 w-3 text-amber-500 fill-amber-500" />
+                                        <span className="text-sm font-medium">{average}</span>
+                                      </div>
+                                    </div>
+                                  )
+                                })
+                            })()}
+                          </div>
+                        ) : (
+                          <p className="text-zinc-500 text-sm">Nenhum dado disponível</p>
                         )}
                       </div>
                     </div>
+                  </CardContent>
+                </Card>
 
-                    <Separator className="bg-zinc-800" />
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="bg-zinc-800 rounded-lg p-4 text-center">
-                        <BarChart3 className="h-8 w-8 mx-auto text-amber-500 mb-2" />
-                        <h3 className="text-lg font-bold">8.7</h3>
-                        <p className="text-xs text-zinc-400">Avaliação média</p>
+                {/* Insights e Conquistas */}
+                <Card className="bg-zinc-900 border-zinc-800 text-white">
+                  <CardHeader>
+                    <CardTitle className="text-lg">Insights e Conquistas</CardTitle>
+                    <CardDescription className="text-zinc-400">
+                      Dados interessantes sobre seus hábitos
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-4">
+                        <h4 className="text-sm font-medium text-amber-500">Seus Destaques</h4>
+                        <div className="space-y-3">
+                          {userData.ratedList && userData.ratedList.length > 0 && (() => {
+                            const insights = []
+                            
+                            // Filme com maior nota
+                            const highestRated = userData.ratedList.reduce((max, rated) => 
+                              rated.rate > max.rate ? rated : max
+                            )
+                            insights.push({
+                              icon: "🏆",
+                              title: "Maior Avaliação",
+                              value: `${highestRated.movie.title} (${highestRated.rate}/10)`
+                            })
+                            
+                            // Gênero mais avaliado
+                            const genreCount: { [key: string]: number } = {}
+                            userData.ratedList.forEach(rated => {
+                              const genres = rated.movie.genres.split(',').map(g => g.trim())
+                              genres.forEach(genre => {
+                                genreCount[genre] = (genreCount[genre] || 0) + 1
+                              })
+                            })
+                            const favoriteGenre = Object.entries(genreCount)
+                              .sort(([,a], [,b]) => b - a)[0]
+                            if (favoriteGenre) {
+                              insights.push({
+                                icon: "🎭",
+                                title: "Gênero Favorito",
+                                value: `${favoriteGenre[0]} (${favoriteGenre[1]} filmes)`
+                              })
+                            }
+                            
+                            // Década preferida
+                            const decadeCount: { [key: string]: number } = {}
+                            userData.ratedList.forEach(rated => {
+                              const year = new Date(rated.movie.releaseDate).getFullYear()
+                              const decade = Math.floor(year / 10) * 10
+                              const decadeLabel = `${decade}s`
+                              decadeCount[decadeLabel] = (decadeCount[decadeLabel] || 0) + 1
+                            })
+                            const favoriteDecade = Object.entries(decadeCount)
+                              .sort(([,a], [,b]) => b - a)[0]
+                            if (favoriteDecade) {
+                              insights.push({
+                                icon: "📅",
+                                title: "Década Preferida",
+                                value: `${favoriteDecade[0]} (${favoriteDecade[1]} filmes)`
+                              })
+                            }
+                            
+                            return insights.map((insight, index) => (
+                              <div key={index} className="flex items-center gap-3 p-3 bg-zinc-800 rounded-lg">
+                                <span className="text-2xl">{insight.icon}</span>
+                                <div>
+                                  <p className="text-sm font-medium">{insight.title}</p>
+                                  <p className="text-xs text-zinc-400">{insight.value}</p>
+                                </div>
+                              </div>
+                            ))
+                          })()}
+                        </div>
                       </div>
-                      <div className="bg-zinc-800 rounded-lg p-4 text-center">
-                        <Clock className="h-8 w-8 mx-auto text-amber-500 mb-2" />
-                        <h3 className="text-lg font-bold">112h</h3>
-                        <p className="text-xs text-zinc-400">Tempo total assistido</p>
+
+                      <div className="space-y-4">
+                        <h4 className="text-sm font-medium text-amber-500">Progresso</h4>
+                        <div className="space-y-4">
+                          {/* Progresso para próximo nível */}
+                          {userData.ranking?.proximoNivel && (
+                            <div className="p-4 bg-zinc-800 rounded-lg">
+                              <div className="flex justify-between items-center mb-2">
+                                <span className="text-sm font-medium">Próximo Nível</span>
+                                <span className="text-sm text-amber-500">{userData.ranking.proximoNivel.nome}</span>
+                              </div>
+                              <Progress
+                                value={
+                                  (userData.ranking.avaliacoes / userData.ranking.proximoNivel.avaliacoesNecessarias) * 100
+                                }
+                                className="h-2 bg-zinc-700"
+                              />
+                              <p className="text-xs text-zinc-400 mt-1">
+                                {userData.ranking.proximoNivel.avaliacoesNecessarias - userData.ranking.avaliacoes} avaliações restantes
+                              </p>
+                            </div>
+                          )}
+
+                          {/* Ranking */}
+                          {userData.rankingUser && (
+                            <div className="p-4 bg-zinc-800 rounded-lg">
+                              <div className="flex justify-between items-center mb-2">
+                                <span className="text-sm font-medium">Posição no Ranking</span>
+                                <span className="text-sm text-blue-500">#{userData.rankingUser.currentRank}</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <div className="flex-1 bg-zinc-700 rounded-full h-2">
+                                  <div 
+                                    className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full"
+                                    style={{ 
+                                      width: `${((userData.rankingUser.totalUsers - userData.rankingUser.currentRank) / userData.rankingUser.totalUsers) * 100}%` 
+                                    }}
+                                  ></div>
+                                </div>
+                                <span className="text-xs text-zinc-400">
+                                  Top {userData.ranking?.percentil ? (100 - userData.ranking.percentil).toFixed(1) : 100}%
+                                </span>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Meta de avaliações */}
+                          <div className="p-4 bg-zinc-800 rounded-lg">
+                            <div className="flex justify-between items-center mb-2">
+                              <span className="text-sm font-medium">Meta: 100 Avaliações</span>
+                              <span className="text-sm text-green-500">
+                                {userData.ratedList?.length || 0}/100
+                              </span>
+                            </div>
+                            <Progress
+                              value={((userData.ratedList?.length || 0) / 100) * 100}
+                              className="h-2 bg-zinc-700"
+                            />
+                            <p className="text-xs text-zinc-400 mt-1">
+                              {100 - (userData.ratedList?.length || 0)} avaliações para completar
+                            </p>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </CardContent>
